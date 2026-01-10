@@ -1,0 +1,69 @@
+<!-- =========================================================
+FILE: bgm.html
+Put this in the SAME folder as your other HTML files.
+Replace "background-music.mp3" with your actual BGM filename.
+========================================================= -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BGM Controller</title>
+</head>
+<body style="margin:0; background:black; overflow:hidden;">
+<iframe id="bgmFrame" src="bgm.html" style="display:none;"></iframe>
+  <audio id="bgm" loop preload="auto">
+    <source src="deep-vibes-synthwave-beat-259777.mp3" type="audio/mpeg">
+  </audio>
+
+  <script>
+    const bgm = document.getElementById("bgm");
+
+    // Keep BGM settings persistent
+    const DEFAULT_VOLUME = 0.4;
+
+    // Restore volume if saved
+    const savedVol = sessionStorage.getItem("bgmVolume");
+    bgm.volume = savedVol !== null ? Number(savedVol) : DEFAULT_VOLUME;
+
+    // If already started in this tab, attempt to resume without resetting time
+    if (sessionStorage.getItem("bgmStarted") === "true") {
+      // Try resume (may fail if browser demands user gesture again)
+      bgm.play().catch(() => {});
+    }
+
+    // Listen for commands from any page
+    window.addEventListener("message", (e) => {
+      const msg = e.data;
+
+      if (msg === "PLAY_BGM") {
+        bgm.play().then(() => {
+          sessionStorage.setItem("bgmStarted", "true");
+        }).catch(() => {});
+        return;
+      }
+
+      if (msg === "STOP_BGM") {
+        bgm.pause();
+        return;
+      }
+
+      if (msg === "RESET_BGM") {
+        bgm.pause();
+        bgm.currentTime = 0;
+        sessionStorage.removeItem("bgmStarted");
+        return;
+      }
+
+      // Volume control: { type: "SET_VOL", value: 0.0 - 1.0 }
+      if (msg && typeof msg === "object" && msg.type === "SET_VOL") {
+        const v = Math.max(0, Math.min(1, Number(msg.value)));
+        bgm.volume = v;
+        sessionStorage.setItem("bgmVolume", String(v));
+        return;
+      }
+    });
+  </script>
+
+</body>
+</html>

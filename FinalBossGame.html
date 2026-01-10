@@ -1,0 +1,1158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Final Boss Game – PUPPETMASTER67</title>
+<style>
+  body{
+    margin:0;
+    background:#000;
+    height:100vh;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    font-family: Arial, Helvetica, sans-serif;
+    color:#fff;
+    overflow:hidden;
+  }
+
+  .frame{
+    width:960px;
+    height:540px;
+    border:2px solid #fff;
+    position:relative;
+    overflow:hidden;
+    box-sizing:border-box;
+    background: radial-gradient(circle at 30% 20%, #07162b, #000 65%);
+  }
+
+  /* ======= HUD ======= */
+  .hudWrap{
+    position:absolute;
+    top:10px;
+    left:10px;
+    right:10px;
+    display:none;
+    z-index:50;
+    pointer-events:none;
+    text-align:center;
+  }
+  .hudRow{
+    display:flex;
+    justify-content:center;
+    align-items:center;
+  }
+  .bossbar{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    background: rgba(0,0,0,0.55);
+    border:1px solid rgba(255,255,255,0.35);
+    border-radius:999px;
+    padding:8px 12px;
+    box-shadow:0 6px 18px rgba(0,0,0,0.4);
+  }
+  .bossbar label{
+    font-size:12px;
+    opacity:0.95;
+    letter-spacing:0.6px;
+    white-space:nowrap;
+  }
+  .bar{
+    width:260px;
+    height:14px;
+    border-radius:999px;
+    background: rgba(255,255,255,0.12);
+    border:1px solid rgba(255,255,255,0.22);
+    overflow:hidden;
+  }
+  .bar > .fill{
+    height:100%;
+    width:100%;
+    background: linear-gradient(90deg, rgb(255, 0, 0), rgb(255, 0, 21));
+    box-shadow:0 0 12px rgba(255, 0, 0, 0.35);
+    transition: width 220ms ease;
+  }
+
+  .livesRow{
+    margin-top:8px;
+    font-size:13px;
+    letter-spacing:0.6px;
+    opacity:0.95;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    gap:8px;
+  }
+  .hearts{ display:flex; gap:15px; align-items:center; }
+  .heart{
+    width:14px; height:14px;
+    background: radial-gradient(circle at 30% 30%, #ffe5ec, #03a000 55%, #6a001f);
+    transform: rotate(45deg);
+    border-radius:4px;
+    position:relative;
+    box-shadow:0 0 10px rgba(255,59,125,0.25);
+  }
+  .heart:before, .heart:after{
+    content:"";
+    position:absolute;
+    width:14px; height:14px;
+    border-radius:50%;
+    background: inherit;
+    top:-7px; left:0;
+  }
+  .heart:after{ left:-7px; top:0; }
+  .heart.lost{ filter: grayscale(1); opacity:0.25; box-shadow:none; }
+
+  /* ======= PLAYFIELD ======= */
+  #game-area{
+    position:absolute;
+    inset:0;
+    overflow:hidden;
+    display:none;
+  }
+
+  .obstacle{
+    position:absolute;
+    background: rgba(255,255,255,0.10);
+    border:1px solid rgba(255,255,255,0.18);
+    border-radius:14px;
+    box-shadow: inset 0 0 18px rgba(0,0,0,0.35);
+  }
+
+  /* ======= PLAYER ======= */
+  #player{
+    position:absolute;
+    width:38px; height:38px;
+    border-radius:50%;
+    background: radial-gradient(circle at 30% 30%, #e6fff1, #2bff86 55%, #007a3e);
+    box-shadow: 0 10px 22px rgba(0,0,0,0.45), 0 0 18px rgba(43,255,134,0.35);
+    z-index:10;
+    transition: filter 120ms ease, transform 120ms ease;
+  }
+  #player.hurt{ filter: brightness(1.35); transform: scale(1.06); }
+
+  #playerLabel{
+    position:absolute;
+    transform: translate(-50%, -100%);
+    z-index:11;
+    pointer-events:none;
+    text-align:center;
+  }
+  #playerLabel .tag{
+    display:inline-block;
+    padding:3px 8px;
+    border-radius:999px;
+    background: rgba(0,0,0,0.65);
+    border: 1px solid rgba(255,255,255,0.25);
+    font-size:12px;
+    font-weight:900;
+    letter-spacing:0.6px;
+  }
+  #playerLabel .arrow{
+    margin:2px auto 0;
+    width:0; height:0;
+    border-left:7px solid transparent;
+    border-right:7px solid transparent;
+    border-top:10px solid rgba(255,255,255,0.9);
+    filter: drop-shadow(0 2px 3px rgba(0,0,0,0.65));
+  }
+
+  /* ======= BOSS ======= */
+  #boss{
+    position:absolute;
+    width:78px; height:78px;
+    border-radius:18px;
+    background: radial-gradient(circle at 30% 20%, #ff9db7, #7a0020 60%, #120009);
+    border:1px solid rgba(255,255,255,0.25);
+    box-shadow: 0 16px 34px rgba(0,0,0,0.55), 0 0 22px rgba(255,0,90,0.35);
+    z-index:9;
+    transition: transform 120ms ease, opacity 240ms ease;
+  }
+  #boss .eye{
+    position:absolute;
+    width:12px; height:12px;
+    background:#fff; border-radius:50%;
+    top:26px; box-shadow:0 0 12px rgba(255,255,255,0.35);
+  }
+  #boss .eye.left{ left:18px; }
+  #boss .eye.right{ right:18px; }
+  #boss .mouth{
+    position:absolute;
+    left:50%; top:48px;
+    width:30px; height:10px;
+    transform:translateX(-50%);
+    border-radius:10px;
+    background:#000;
+    box-shadow:0 0 12px rgba(255,0,90,0.25);
+  }
+
+  /* ======= STARS ======= */
+  .star{
+    position:absolute;
+    width:34px; height:34px;
+    background: radial-gradient(circle at 30% 30%, #fff6b3, #ffd000 55%, #a16c00);
+    clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+    box-shadow:0 0 22px rgba(255,208,0,0.65);
+    z-index:8;
+    animation: starBob 1.2s ease-in-out infinite;
+  }
+  @keyframes starBob{
+    0%,100% { transform: translateY(0) scale(1); }
+    50% { transform: translateY(-6px) scale(1.03); }
+  }
+
+  /* ======= PROJECTILES ======= */
+  .proj{
+    position:absolute;
+    width:10px; height:10px;
+    border-radius:50%;
+    z-index:12;
+  }
+  .proj.enemy{
+    background: radial-gradient(circle at 30% 30%, #ffd6df, #ff2a7a 55%, #4a0015);
+    box-shadow:0 0 14px rgba(255,42,122,0.35);
+  }
+
+  /* ======= EXPLOSION ======= */
+  .explosion {
+    position: absolute;
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 60;
+    background: radial-gradient(circle, rgba(255,255,255,1) 0%, rgba(255,120,180,1) 35%, rgba(255,0,90,0.0) 70%);
+    transform: translate(-50%, -50%) scale(0.6);
+    animation: explode 420ms ease-out forwards;
+    filter: drop-shadow(0 0 10px rgba(255,0,90,0.75));
+  }
+  @keyframes explode {
+    0%   { opacity: 1; transform: translate(-50%, -50%) scale(0.6); }
+    60%  { opacity: 1; transform: translate(-50%, -50%) scale(3.2); }
+    100% { opacity: 0; transform: translate(-50%, -50%) scale(4.2); }
+  }
+
+  /* ======= OVERLAYS ======= */
+  .overlay{
+    position:absolute;
+    inset:0;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    z-index:100;
+    background: rgba(0,0,0,0.78);
+  }
+
+  /* ======= VICTORY CUTSCENE ======= */
+  #victoryScreen{
+    position:absolute;
+    inset:0;
+    display:none;
+    overflow:hidden;
+    background:#000;
+    z-index:9999;
+  }
+
+  /* ======= MONSTER SHATTER ======= */
+  #victoryMonster{
+    position:absolute;
+    left:50%;
+    top:45%;
+    transform: translate(-50%, -50%);
+    width:420px;
+    height:420px;
+    z-index:10000;
+  }
+
+  #victoryMonsterWhole{
+    position:absolute;
+    width:320px;
+    height:320px;
+    left:50%;
+    top:50%;
+    transform:translate(-50%,-50%);
+    background: radial-gradient(circle at 30% 20%, #ff9db7, #7a0020 60%, #120009);
+    border-radius:28px;
+    box-shadow: 0 0 35px rgba(255,0,90,0.55);
+    border:3px solid rgba(255,255,255,0.18);
+  }
+
+  .victory-eye{
+    position:absolute;
+    width:42px;
+    height:42px;
+    background: radial-gradient(circle,#ffffff 15%,#ff2222 45%,#4a0000 70%);
+    border-radius:50%;
+    top:34%;
+    transform:translateY(-50%);
+    box-shadow:0 0 15px #ff2222;
+  }
+  .victory-eye.left  { left:22%; }
+  .victory-eye.right { right:22%; }
+  .victory-eye .pupil{
+    position:absolute;
+    width:14px;
+    height:14px;
+    background:#000;
+    border-radius:50%;
+    top:50%;
+    left:50%;
+    transform:translate(-50%,-50%);
+  }
+
+  #victoryMouth{
+    position:absolute;
+    width:110px;
+    height:28px;
+    top:62%;
+    left:50%;
+    transform:translate(-50%,-50%);
+    border-radius:16px;
+    background:#000;
+    box-shadow:0 0 14px rgba(255,0,90,0.25);
+  }
+
+  .vshard{
+    position:absolute;
+    width:120px;
+    height:140px;
+    background: linear-gradient(135deg, rgba(255,190,210,0.95), rgba(120,0,40,0.85));
+    border:2px solid rgba(255,220,235,0.35);
+    box-shadow:0 0 16px rgba(255,0,90,0.35);
+    opacity:0;
+  }
+  .vshard.s1 { top:90px;  left:160px; clip-path:polygon(0 0, 100% 0, 75% 70%, 10% 100%); }
+  .vshard.s2 { top:110px; left:230px; clip-path:polygon(10% 0, 100% 10%, 100% 80%, 30% 100%); }
+  .vshard.s3 { top:160px; left:140px; clip-path:polygon(0 10%, 90% 0, 100% 60%, 20% 100%); }
+  .vshard.s4 { top:150px; left:210px; clip-path:polygon(20% 0, 100% 15%, 80% 100%, 0 70%); }
+  .vshard.s5 { top:190px; left:180px; clip-path:polygon(0 0, 80% 10%, 100% 80%, 10% 100%); }
+  .vshard.s6 { top:120px; left:100px; clip-path:polygon(20% 0, 100% 30%, 80% 100%, 0 80%); }
+
+  @keyframes vshardFly1 { 0%{transform:translate(0,0) rotate(0deg);opacity:1;} 100%{transform:translate(-180px,-100px) rotate(-25deg);opacity:0;} }
+  @keyframes vshardFly2 { 0%{transform:translate(0,0) rotate(0deg);opacity:1;} 100%{transform:translate(190px,-80px) rotate(30deg);opacity:0;} }
+  @keyframes vshardFly3 { 0%{transform:translate(0,0) rotate(0deg);opacity:1;} 100%{transform:translate(-160px,120px) rotate(-18deg);opacity:0;} }
+  @keyframes vshardFly4 { 0%{transform:translate(0,0) rotate(0deg);opacity:1;} 100%{transform:translate(160px,140px) rotate(22deg);opacity:0;} }
+  @keyframes vshardFly5 { 0%{transform:translate(0,0) rotate(0deg);opacity:1;} 100%{transform:translate(0,200px) rotate(10deg);opacity:0;} }
+  @keyframes vshardFly6 { 0%{transform:translate(0,0) rotate(0deg);opacity:1;} 100%{transform:translate(-40px,-210px) rotate(-30deg);opacity:0;} }
+
+  @keyframes victoryFadeBody {
+    0% { opacity:1; transform:translate(-50%,-50%) scale(1); }
+    65%{ opacity:1; transform:translate(-50%,-50%) scale(1); }
+    100%{ opacity:0; transform:translate(-50%,-50%) scale(0.85); }
+  }
+
+  .monster-shatter #victoryMonsterWhole{
+    animation: victoryFadeBody 1.2s ease-out forwards;
+  }
+  .monster-shatter .vshard.s1 { opacity:1; animation: vshardFly1 1.8s ease-out forwards; }
+  .monster-shatter .vshard.s2 { opacity:1; animation: vshardFly2 1.9s ease-out forwards; }
+  .monster-shatter .vshard.s3 { opacity:1; animation: vshardFly3 2.0s ease-out forwards; }
+  .monster-shatter .vshard.s4 { opacity:1; animation: vshardFly4 2.1s ease-out forwards; }
+  .monster-shatter .vshard.s5 { opacity:1; animation: vshardFly5 2.0s ease-out forwards; }
+  .monster-shatter .vshard.s6 { opacity:1; animation: vshardFly6 2.2s ease-out forwards; }
+
+  /* dialogue box style */
+  #victoryDialogueBox{
+    width: 900px;
+    min-height: 90px;
+    background: #2a2a2a;
+    border: 2px solid white;
+    border-radius: 25px;
+    position: absolute;
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 15px 20px;
+    box-sizing: border-box;
+    color: white;
+    font-size: 16px;
+    display: flex;
+    flex-direction: column;
+    cursor: pointer;
+    z-index: 15000;
+  }
+
+  #victorySpeaker{
+    font-weight: bold;
+    text-decoration: underline;
+    margin-bottom: 5px;
+  }
+
+  #victoryText{
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+    white-space: pre-wrap;
+    padding-right: 80px;
+  }
+
+  #victoryText.typing::after{
+    content: '|';
+    animation: blink 0.7s infinite;
+    margin-left: 2px;
+  }
+
+  #victoryClickHint{
+    position: absolute;
+    bottom: 10px;
+    right: 15px;
+    font-size: 14px;
+    color: #ccc;
+    opacity: 0.8;
+    display: none;
+  }
+
+  @keyframes blink{
+    0%,50%,100%{opacity:1;}
+    25%,75%{opacity:0;}
+  }
+
+  .instructionCard{
+    position:relative;
+    width:560px;
+    max-width:92%;
+    padding:22px 22px 20px;
+    border-radius:18px;
+    background: rgba(18,18,24,0.94);
+    border:1px solid rgba(255,255,255,0.18);
+    box-shadow:0 18px 60px rgba(0,0,0,0.65);
+    text-align: center;
+  }
+
+  .instructionFooter{
+    display:flex;
+    justify-content:center;
+    margin-top:16px;
+  }
+
+  .btn-primary{
+    border:none;
+    padding:16px 28px;
+    border-radius:14px;
+    cursor:pointer;
+    font-weight:900;
+    font-size:18px;
+    background:#fff;
+    color:#000;
+  }
+
+  .cardEye{
+    position:absolute;
+    top:50%;
+    width:52px; height:52px;
+    border-radius:50%;
+    transform:translateY(-50%);
+    background: radial-gradient(circle,#ffffff 10%,#ff4444 40%,#3a0000 72%);
+    box-shadow:0 0 20px rgba(255,0,90,0.6);
+  }
+  .cardEye.left{ left:-66px; }
+  .cardEye.right{ right:-66px; }
+
+  .card{
+    width:720px;
+    max-width:92%;
+    background: rgba(20,20,24,0.92);
+    border:1px solid rgba(255,255,255,0.18);
+    border-radius:18px;
+    box-shadow: 0 18px 60px rgba(0,0,0,0.65);
+    padding:18px 18px 16px;
+  }
+  .choices{
+    display:grid;
+    grid-template-columns: 1fr;
+    gap:10px;
+    margin-top:10px;
+  }
+  .choice{
+    text-align:left;
+    width:100%;
+    background: rgba(255,255,255,0.08);
+    color:#fff;
+    border:1px solid rgba(255,255,255,0.14);
+    border-radius:12px;
+    padding:10px 12px;
+    font-weight:700;
+    cursor:pointer;
+  }
+  .choice:hover{ background: rgba(255,255,255,0.12); }
+  .feedback{ margin-top:10px; font-size:14px; min-height:18px; }
+  .big{ font-size:26px; margin:0 0 8px; }
+
+  #questionOverlay .card{
+    width:860px;
+    max-width:94%;
+    padding:26px 26px 22px;
+    border-radius:22px;
+  }
+</style>
+</head>
+
+<body>
+  <div class="frame">
+    <div class="hudWrap" id="hudWrap">
+      <div class="hudRow">
+        <div class="bossbar">
+          <label>PUPPETMASTER67</label>
+          <div class="bar"><div class="fill" id="bossHPFill"></div></div>
+        </div>
+      </div>
+      <div class="livesRow">
+        <span>Lives:</span>
+        <div class="hearts" id="hearts"></div>
+      </div>
+    </div>
+
+    <div id="game-area"></div>
+
+    <div class="overlay" id="startOverlay">
+      <div class="instructionCard">
+        <div class="cardEye left"></div>
+        <div class="cardEye right"></div>
+        <h1>FINAL ROUND</h1>
+        <p><b>Goal:</b> Collect <b>3 stars</b> across the map.</p>
+        <p><b>Controls:</b> Move with <b>WASD</b> or <b>Arrow keys</b>. Dodge his shots!</p>
+        <div class="instructionFooter">
+          <button class="btn-primary" id="btnStart">Start Game</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="overlay" id="questionOverlay" style="display:none;">
+      <div class="card">
+        <h2 id="qTitle">Question</h2>
+        <p id="qText"></p>
+        <div class="choices" id="qChoices"></div>
+        <div class="feedback" id="qFeedback"></div>
+      </div>
+    </div>
+
+    <div class="overlay" id="deathOverlay" style="display:none;">
+      <div class="card">
+        <h1 class="big">YOU DIED</h1>
+        <p>PUPPETMASTER67 got you 3 times. Restart to try again.</p>
+        <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:12px;">
+          <button class="btn-primary" onclick="location.reload()">Restart</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ✅ VICTORY CUTSCENE (monster shatter + dialogue) -->
+    <div id="victoryScreen">
+      <div id="victoryMonster">
+        <div id="victoryMonsterWhole"></div>
+        <div class="victory-eye left"><div class="pupil"></div></div>
+        <div class="victory-eye right"><div class="pupil"></div></div>
+        <div id="victoryMouth"></div>
+
+        <div class="vshard s1"></div>
+        <div class="vshard s2"></div>
+        <div class="vshard s3"></div>
+        <div class="vshard s4"></div>
+        <div class="vshard s5"></div>
+        <div class="vshard s6"></div>
+      </div>
+
+      <div id="victoryDialogueBox">
+        <span id="victorySpeaker">SYSTEM</span>
+        <span id="victoryText" class="typing"></span>
+        <span id="victoryClickHint">Click to continue →</span>
+      </div>
+    </div>
+
+    <audio id="warble" src="puppetmaster talking.mp3" preload="auto"></audio>
+
+    <audio id="bossShootSfx" src="scifi-gun-shoot-1-266417.mp3" preload="auto"></audio>
+    <audio id="bossHitSfx" src="ow-sound-38502.mp3" preload="auto"></audio>
+    <audio id="bossMusic" src="boss_music.mp3" preload="auto" loop></audio>
+  </div>
+
+<script>
+(() => {
+  const W = 960, H = 540;
+
+  const hudWrap = document.getElementById("hudWrap");
+  const game = document.getElementById("game-area");
+
+  const startOverlay = document.getElementById("startOverlay");
+  const questionOverlay = document.getElementById("questionOverlay");
+  const deathOverlay = document.getElementById("deathOverlay");
+
+  // victory elements
+  const victoryScreen = document.getElementById("victoryScreen");
+  const victoryDialogueBox = document.getElementById("victoryDialogueBox");
+  const victorySpeakerEl = document.getElementById("victorySpeaker");
+  const victoryTextEl = document.getElementById("victoryText");
+  const victoryClickHint = document.getElementById("victoryClickHint");
+  const victoryMonster = document.getElementById("victoryMonster");
+
+  const btnStart = document.getElementById("btnStart");
+  const bossHPFill = document.getElementById("bossHPFill");
+  const heartsEl = document.getElementById("hearts");
+
+  const qTitle = document.getElementById("qTitle");
+  const qText = document.getElementById("qText");
+  const qChoices = document.getElementById("qChoices");
+  const qFeedback = document.getElementById("qFeedback");
+
+  const bossShootSfx = document.getElementById("bossShootSfx");
+  const bossHitSfx   = document.getElementById("bossHitSfx");
+  const bossMusic    = document.getElementById("bossMusic");
+  const warble       = document.getElementById("warble");
+
+  const NEXT_PAGE = "victorypage.html";
+
+  let audioUnlocked = false;
+  function unlockAudio(){
+    if(audioUnlocked) return;
+    audioUnlocked = true;
+
+    const audios = [bossShootSfx, bossHitSfx, bossMusic, warble];
+    audios.forEach(a => {
+      if(!a) return;
+      a.volume = 1;
+      a.play().then(() => {
+        a.pause();
+        a.currentTime = 0;
+      }).catch(() => {});
+    });
+  }
+
+  document.addEventListener("pointerdown", unlockAudio, { once:true });
+  document.addEventListener("keydown", unlockAudio, { once:true });
+
+  function playSfx(a){
+    if(!audioUnlocked || !a) return;
+    try{ a.pause(); a.currentTime = 0; a.play().catch(()=>{}); }catch(e){}
+  }
+
+  // ✅ warble controls (plays per puppetmaster line, stops when line ends)
+  function startWarble(){
+    if(!audioUnlocked || !warble) return;
+    try{
+      warble.pause();
+      warble.currentTime = 0;
+      warble.volume = 1;
+      warble.play().catch(()=>{});
+    }catch(e){}
+  }
+  function stopWarble(){
+    if(!warble) return;
+    try{
+      warble.pause();
+      warble.currentTime = 0;
+    }catch(e){}
+  }
+
+  function startMusic(){
+    if(!audioUnlocked || !bossMusic) return;
+    bossMusic.volume = 0.7;
+    bossMusic.currentTime = 0;
+    bossMusic.play().catch(()=>{});
+  }
+  function stopMusic(){
+    if(!bossMusic) return;
+    try{ bossMusic.pause(); }catch(e){}
+  }
+
+  let running = false;
+  let pausedForQuestion = false;
+  let gameOver = false;
+
+  const keys = {};
+  const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+
+  const MAX_LIVES = 3;
+  let lives = MAX_LIVES;
+
+  function renderLives(){
+    heartsEl.innerHTML = "";
+    for(let i=0;i<MAX_LIVES;i++){
+      const h = document.createElement("div");
+      h.className = "heart" + (i >= lives ? " lost" : "");
+      heartsEl.appendChild(h);
+    }
+  }
+
+  function loseLife(){
+    if(gameOver) return;
+    lives = Math.max(0, lives - 1);
+    renderLives();
+    if(player.el){
+      player.el.classList.add("hurt");
+      setTimeout(() => player.el && player.el.classList.remove("hurt"), 140);
+    }
+    if(lives <= 0) die();
+  }
+
+  function die(){
+    gameOver = true;
+    running = false;
+    stopMusic();
+    deathOverlay.style.display = "flex";
+  }
+
+  const player = { x: 120, y: 455, r: 19, speed: 3.3, el: null, invulnUntil: 0 };
+  const boss   = { x: 790, y: 110, r: 39, el: null, hpHits: 0, fireCooldown: 0, moveT: 0 };
+
+  const enemyProjectiles = [];
+
+  const obstacles = [
+    { x: 170, y: 160, w: 190, h: 100 },
+    { x: 420, y: 360, w: 220, h: 115 },
+    { x: 700, y: 210, w: 190, h: 105 },
+  ];
+
+  const stars = [
+    { x: 95,  y: 85,  r: 16, el: null, taken:false },
+    { x: 480, y: 270, r: 16, el: null, taken:false },
+    { x: 885, y: 500, r: 16, el: null, taken:false },
+  ];
+
+  let playerLabelEl = null;
+
+  const QUESTIONS = [
+    {
+      title: "GenAI & misinformation",
+      text: "Which GenAI-enabled harm can spread faster and feel more believable than traditional misinformation?",
+      choices: [
+        "Deepfakes and synthetic media impersonation",
+        "Slow-loading websites",
+        "File compression artifacts",
+        "Battery drain on phones"
+      ],
+      correctIndex: 0
+    },
+    {
+      title: "GenAI & scams",
+      text: "How can GenAI make phishing scams more effective?",
+      choices: [
+        "By making messages more personalized and convincing at scale",
+        "By disabling spam filters automatically",
+        "By removing the need for internet",
+        "By encrypting all emails by default"
+      ],
+      correctIndex: 0
+    },
+    {
+      title: "GenAI & harassment",
+      text: "Which is a realistic GenAI-related online harm?",
+      choices: [
+        "Automated generation of targeted harassment messages",
+        "Instantly fixing all cyberbullying",
+        "Preventing all identity theft",
+        "Making passwords unnecessary everywhere"
+      ],
+      correctIndex: 0
+    }
+  ];
+  let nextQuestionIndex = 0;
+
+  /* ===== Victory dialogue ===== */
+  const victoryLines = [
+    { speaker: "PUPPETMASTER67", text: "NO... THIS CAN'T BE—!" },
+    { speaker: "PUPPETMASTER67", text: "You think you’ve won… but you only learned what I tried to hide." },
+    { speaker: "PUPPETMASTER67", text: "GenAI can magnify harm—scams, deepfakes, harassment—if you stop paying attention." },
+    { speaker: "PUPPETMASTER67", text: "I hope you learnt something..." }
+  ];
+
+  let vLineIndex = 0;
+  let vCharIndex = 0;
+  let vTyping = false;
+  let vInterval = null;
+
+  let redirectScheduled = false;
+  function scheduleRedirect(){
+    if(redirectScheduled) return;
+    redirectScheduled = true;
+    setTimeout(() => {
+      window.location.href = NEXT_PAGE;
+    }, 900);
+  }
+
+  function showVHint(){ victoryClickHint.style.display = "block"; }
+  function hideVHint(){ victoryClickHint.style.display = "none"; }
+
+  function typeVictoryLine(){
+    const line = victoryLines[vLineIndex];
+
+    victorySpeakerEl.textContent = line.speaker;
+    victoryTextEl.textContent = "";
+    hideVHint();
+
+    vCharIndex = 0;
+    vTyping = true;
+    victoryTextEl.classList.add("typing");
+
+    // ✅ start warble on EVERY puppetmaster line
+    if(line.speaker === "PUPPETMASTER67") startWarble();
+    else stopWarble();
+
+    clearInterval(vInterval);
+    vInterval = setInterval(() => {
+      if(vCharIndex < line.text.length){
+        victoryTextEl.textContent += line.text.charAt(vCharIndex++);
+      } else {
+        clearInterval(vInterval);
+        vTyping = false;
+        victoryTextEl.classList.remove("typing");
+
+        // ✅ stop warble once line finishes typing
+        stopWarble();
+
+        // ✅ after last line finishes, auto redirect (no click needed)
+        if(vLineIndex === victoryLines.length - 1){
+          scheduleRedirect();
+        } else {
+          showVHint();
+        }
+      }
+    }, 30);
+  }
+
+  victoryDialogueBox.addEventListener("click", () => {
+    const line = victoryLines[vLineIndex];
+
+    // click while typing => finish instantly + stop warble
+    if(vTyping){
+      clearInterval(vInterval);
+      victoryTextEl.textContent = line.text;
+      victoryTextEl.classList.remove("typing");
+      vTyping = false;
+
+      stopWarble();
+
+      if(vLineIndex === victoryLines.length - 1){
+        scheduleRedirect();
+      } else {
+        showVHint();
+      }
+      return;
+    }
+
+    // next line (but on last line, clicking does nothing; it will auto redirect)
+    if(vLineIndex < victoryLines.length - 1){
+      vLineIndex++;
+      typeVictoryLine();
+    }
+  });
+
+  function circleHitsRect(cx, cy, r, rect){
+    const closestX = clamp(cx, rect.x, rect.x + rect.w);
+    const closestY = clamp(cy, rect.y, rect.y + rect.h);
+    const dx = cx - closestX;
+    const dy = cy - closestY;
+    return (dx*dx + dy*dy) <= r*r;
+  }
+  function circleHitsCircle(ax, ay, ar, bx, by, br){
+    const dx = ax - bx;
+    const dy = ay - by;
+    const rr = ar + br;
+    return (dx*dx + dy*dy) <= rr*rr;
+  }
+
+  function updateBossHP(){
+    const remaining = Math.max(0, 3 - boss.hpHits);
+    bossHPFill.style.width = ((remaining / 3) * 100) + "%";
+  }
+
+  function renderEntity(el, x, y, r){
+    el.style.left = (x - r) + "px";
+    el.style.top  = (y - r) + "px";
+  }
+
+  function renderPlayerLabel(){
+    if(!playerLabelEl) return;
+    playerLabelEl.style.left = player.x + "px";
+    playerLabelEl.style.top  = (player.y - player.r - 6) + "px";
+  }
+
+  function bossExplosion(){
+    const ex = document.createElement("div");
+    ex.className = "explosion";
+    ex.style.left = boss.x + "px";
+    ex.style.top  = boss.y + "px";
+    game.appendChild(ex);
+
+    boss.el.style.transform = "scale(1.10) rotate(3deg)";
+    setTimeout(() => boss.el && (boss.el.style.transform = ""), 160);
+    setTimeout(() => ex.remove(), 520);
+  }
+
+  function bossTakeHit(){
+    if(gameOver) return;
+    bossExplosion();
+    playSfx(bossHitSfx);
+
+    boss.hpHits++;
+    updateBossHP();
+
+    if(boss.hpHits >= 3){
+      setTimeout(winGame, 450);
+    }
+  }
+
+  function spawnEnemyProjectile(){
+    const dx = player.x - boss.x;
+    const dy = player.y - boss.y;
+    const len = Math.hypot(dx, dy) || 1;
+    const speed = 3.5;
+
+    const p = { x: boss.x, y: boss.y, r: 5, vx:(dx/len)*speed, vy:(dy/len)*speed, el:null };
+    p.el = document.createElement("div");
+    p.el.className = "proj enemy";
+    game.appendChild(p.el);
+    enemyProjectiles.push(p);
+
+    playSfx(bossShootSfx);
+  }
+
+  function stepEnemyProjectiles(){
+    for(let i=enemyProjectiles.length-1; i>=0; i--){
+      const p = enemyProjectiles[i];
+      p.x += p.vx;
+      p.y += p.vy;
+
+      if(p.x < -20 || p.x > W+20 || p.y < -20 || p.y > H+20){
+        p.el.remove();
+        enemyProjectiles.splice(i,1);
+        continue;
+      }
+
+      for(const o of obstacles){
+        if(circleHitsRect(p.x, p.y, p.r, o)){
+          p.el.remove();
+          enemyProjectiles.splice(i,1);
+          continue;
+        }
+      }
+
+      const now = performance.now();
+      if(circleHitsCircle(p.x, p.y, p.r, player.x, player.y, player.r) && now > player.invulnUntil){
+        player.invulnUntil = now + 900;
+        loseLife();
+        p.el.remove();
+        enemyProjectiles.splice(i,1);
+        continue;
+      }
+
+      p.el.style.left = (p.x - p.r) + "px";
+      p.el.style.top  = (p.y - p.r) + "px";
+    }
+  }
+
+  function tryMoveCircle(entity, nx, ny){
+    nx = clamp(nx, entity.r, W - entity.r);
+    ny = clamp(ny, entity.r + 10, H - entity.r);
+
+    for(const o of obstacles){
+      if(circleHitsRect(nx, ny, entity.r, o)){
+        return {x: entity.x, y: entity.y};
+      }
+    }
+    return {x:nx, y:ny};
+  }
+
+  function stepPlayer(){
+    let dx = 0, dy = 0;
+    if(keys["ArrowUp"] || keys["w"] || keys["W"]) dy -= 1;
+    if(keys["ArrowDown"] || keys["s"] || keys["S"]) dy += 1;
+    if(keys["ArrowLeft"] || keys["a"] || keys["A"]) dx -= 1;
+    if(keys["ArrowRight"] || keys["d"] || keys["D"]) dx += 1;
+
+    if(dx !== 0 || dy !== 0){
+      const len = Math.hypot(dx, dy) || 1;
+      dx = (dx/len) * player.speed;
+      dy = (dy/len) * player.speed;
+
+      const moved = tryMoveCircle(player, player.x + dx, player.y + dy);
+      player.x = moved.x; player.y = moved.y;
+    }
+
+    renderEntity(player.el, player.x, player.y, player.r);
+    renderPlayerLabel();
+
+    for(const s of stars){
+      if(!s.taken && circleHitsCircle(player.x, player.y, player.r, s.x, s.y, s.r)){
+        s.taken = true;
+        s.el.style.display = "none";
+        pauseForQuestion();
+        break;
+      }
+    }
+  }
+
+  function stepBoss(dt){
+    boss.moveT += dt;
+    const baseX = 790, baseY = 110, ampX = 95, ampY = 60;
+    const nx = baseX + Math.cos(boss.moveT * 0.00105) * ampX;
+    const ny = baseY + Math.sin(boss.moveT * 0.00155) * ampY;
+
+    const moved = tryMoveCircle(boss, nx, ny);
+    boss.x = moved.x; boss.y = moved.y;
+
+    renderEntity(boss.el, boss.x, boss.y, boss.r);
+
+    boss.fireCooldown -= dt;
+    if(boss.fireCooldown <= 0){
+      boss.fireCooldown = 650;
+      if(!pausedForQuestion) spawnEnemyProjectile();
+    }
+  }
+
+  function pauseForQuestion(){
+    pausedForQuestion = true;
+    running = false;
+
+    const q = QUESTIONS[nextQuestionIndex] || QUESTIONS[QUESTIONS.length - 1];
+    qTitle.textContent = q.title;
+    qText.textContent = q.text;
+    qFeedback.textContent = "";
+    qChoices.innerHTML = "";
+
+    q.choices.forEach((choiceText, idx) => {
+      const btn = document.createElement("button");
+      btn.className = "choice";
+      btn.textContent = choiceText;
+      btn.addEventListener("click", () => handleAnswer(idx === q.correctIndex));
+      qChoices.appendChild(btn);
+    });
+
+    questionOverlay.style.display = "flex";
+  }
+
+  function handleAnswer(correct){
+    if(!pausedForQuestion) return;
+
+    if(correct){
+      qFeedback.textContent = "Correct — direct hit!";
+      qFeedback.style.color = "#a9ffd9";
+      bossTakeHit();
+      nextQuestionIndex = Math.min(nextQuestionIndex + 1, QUESTIONS.length - 1);
+
+      setTimeout(() => {
+        questionOverlay.style.display = "none";
+        pausedForQuestion = false;
+        if(!gameOver) running = true;
+      }, 650);
+    } else {
+      qFeedback.textContent = "Not quite. Try again!";
+      qFeedback.style.color = "#ffb0c0";
+    }
+  }
+
+  function winGame(){
+    gameOver = true;
+    running = false;
+    pausedForQuestion = false;
+    stopMusic();
+
+    questionOverlay.style.display = "none";
+    hudWrap.style.display = "none";
+
+    while(enemyProjectiles.length){
+      const p = enemyProjectiles.pop();
+      if(p.el) p.el.remove();
+    }
+
+    if(boss.el) boss.el.style.display = "none";
+
+    victoryScreen.style.display = "block";
+
+    redirectScheduled = false;
+    stopWarble();
+
+    victoryMonster.classList.remove("monster-shatter");
+    void victoryMonster.offsetWidth;
+    requestAnimationFrame(() => {
+      victoryMonster.classList.add("monster-shatter");
+    });
+
+    vLineIndex = 0;
+    vCharIndex = 0;
+    vTyping = false;
+    hideVHint();
+    setTimeout(typeVictoryLine, 250);
+  }
+
+  function buildGame(){
+    player.el = document.createElement("div");
+    player.el.id = "player";
+    game.appendChild(player.el);
+
+    playerLabelEl = document.createElement("div");
+    playerLabelEl.id = "playerLabel";
+    playerLabelEl.innerHTML = `<div class="tag">YOU</div><div class="arrow"></div>`;
+    game.appendChild(playerLabelEl);
+
+    boss.el = document.createElement("div");
+    boss.el.id = "boss";
+    boss.el.innerHTML = `<div class="eye left"></div><div class="eye right"></div><div class="mouth"></div>`;
+    game.appendChild(boss.el);
+
+    obstacles.forEach(o => {
+      const el = document.createElement("div");
+      el.className = "obstacle";
+      el.style.left = o.x + "px";
+      el.style.top = o.y + "px";
+      el.style.width = o.w + "px";
+      el.style.height = o.h + "px";
+      game.appendChild(el);
+      o.el = el;
+    });
+
+    stars.forEach(s => {
+      const el = document.createElement("div");
+      el.className = "star";
+      el.style.left = (s.x - 17) + "px";
+      el.style.top  = (s.y - 17) + "px";
+      game.appendChild(el);
+      s.el = el;
+    });
+
+    lives = MAX_LIVES;
+    renderLives();
+    boss.hpHits = 0;
+    updateBossHP();
+
+    renderEntity(player.el, player.x, player.y, player.r);
+    renderPlayerLabel();
+    renderEntity(boss.el, boss.x, boss.y, boss.r);
+  }
+
+  let last = performance.now();
+  function loop(now){
+    const dt = now - last;
+    last = now;
+
+    if(running && !gameOver){
+      stepPlayer();
+      stepBoss(dt);
+      stepEnemyProjectiles();
+    }
+
+    requestAnimationFrame(loop);
+  }
+
+  document.addEventListener("keydown", (e) => {
+    keys[e.key] = true;
+    if(["ArrowUp","ArrowDown","ArrowLeft","ArrowRight"].includes(e.key)) e.preventDefault();
+    if(e.key === "0") winGame();
+  });
+  document.addEventListener("keyup", (e) => { keys[e.key] = false; });
+
+  btnStart.addEventListener("click", () => {
+    unlockAudio();
+    startOverlay.style.display = "none";
+    game.style.display = "block";
+    hudWrap.style.display = "block";
+    buildGame();
+    running = true;
+    startMusic();
+  });
+
+  requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>

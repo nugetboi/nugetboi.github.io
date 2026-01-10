@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MirrorMinion + Blue AI Monster</title>
+<style>
+    /* FADE IN EFFECT */
+.frame {
+    opacity: 0; /* starts invisible */
+}
+
+.fade-in {
+    animation: fadeIn 1.8s ease forwards;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+body {
+    margin: 0;
+    background: #000;
+    overflow: hidden;
+    font-family: Arial, Helvetica, sans-serif;
+    color: white;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.frame {
+    width: 960px;
+    height: 540px;
+    border: 2px solid white;
+    position: relative;
+    overflow: hidden;
+    box-sizing: border-box;
+    transition: opacity 1.5s ease;
+}
+
+/* FADE OUT EFFECT */
+.fade-out {
+    animation: fadeOut 1.8s ease forwards;
+}
+
+@keyframes fadeOut {
+    from { opacity: 1; }
+    to   { opacity: 0; }
+}
+
+/* ================= BACKGROUND VIDEO ================= */
+.background-video {
+    position:absolute;
+    top:0;
+    left:0;
+    width:100%;
+    height:100%;
+    object-fit: cover;
+    filter: brightness(0.7) contrast(1.1);
+    z-index:0;
+}
+
+/* ================= SCREEN FLASH ================= */
+.flash-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: white;
+    opacity: 0;
+    pointer-events: none;
+    z-index: 999;
+}
+
+.flash-active {
+    animation: flash 0.4s ease-out forwards;
+}
+
+@keyframes flash {
+    0% {opacity: 1;}
+    100% {opacity: 0;}
+}
+
+/* Dialogue Box */
+.dialogue-box {
+    width: 900px;
+    min-height: 90px;
+    background: #2a2a2a;
+    border: 2px solid white;
+    border-radius: 25px;
+    position: absolute;
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 15px 20px;
+    box-sizing: border-box;
+    color: white;
+    font-size: 16px;
+    display: flex;
+    flex-direction: column;
+    cursor: pointer;
+    z-index: 15;
+}
+
+.speaker-name {
+    font-weight: bold;
+    text-decoration: underline;
+    margin-bottom: 5px;
+}
+
+.dialogue-text {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+    white-space: pre-wrap;
+    padding-right: 80px;
+}
+
+.typing::after {
+    content: '|';
+    animation: blink 0.7s infinite;
+    margin-left: 2px;
+}
+
+.click-hint {
+    position: absolute;
+    bottom: 10px;
+    right: 15px;
+    font-size: 14px;
+    color: #ccc;
+    opacity: 0.8;
+    display: none;
+}
+
+@keyframes blink {
+    0%,50%,100% {opacity:1;}
+    25%,75% {opacity:0;}
+}
+
+/* ==================== BLUE OVAL CREATURE ==================== */
+#creature-container {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 480px;
+    height: 480px;
+    transform: translate(-50%, -50%) scale(0.5);
+    z-index: 10;
+    opacity: 0;
+    transition: all 0.5s ease;
+}
+
+/* after jumpscare, scale in */
+#creature-container.fullscreen {
+    transform: translate(-50%, -50%) scale(1.5);
+    opacity: 1;
+}
+
+@keyframes monsterJitter {
+    0% { transform: translate(-50%, -50%) rotate(0deg) scale(1.5); }
+    50% { transform: translate(-50%, -50%) rotate(3deg) scale(1.58); }
+    100% { transform: translate(-50%, -50%) rotate(0deg) scale(1.5); }
+}
+
+/* Blue oval body */
+#blue-body{
+    position:absolute;
+    width:160px;
+    height:220px;
+    left:50%;
+    top:40%;
+    transform:translate(-50%,-50%);
+    background:radial-gradient(circle at 30% 20%, #88ddff, #0050a0);
+    border-radius:50%;
+    box-shadow:0 0 35px rgba(0,170,255,0.9);
+    border:3px solid #001020;
+}
+
+/* Eyes (red iris) */
+.eye{
+    position:absolute;
+    width:46px;
+    height:46px;
+    background: radial-gradient(circle,#ffffff 15%,#ff2222 45%,#4a0000 70%);
+    border-radius:50%;
+    top:38%;
+    transform:translateY(-50%);
+    box-shadow:0 0 15px #ff2222;
+    overflow:hidden;
+}
+.eye-left{ left:55px; }
+.eye-right{ right:55px; }
+
+.pupil{
+    position:absolute;
+    width:14px;
+    height:14px;
+    background:#000;
+    border-radius:50%;
+    top:50%;
+    left:50%;
+    transform:translate(-50%,-50%);
+    animation: blink-eye 3s infinite;
+}
+
+@keyframes blink-eye{
+    0%,10%,90%,100%{transform:translate(-50%,-50%) scaleY(1);}
+    45%,55%{transform:translate(-50%,-50%) scaleY(0.1);}
+}
+
+/* Mouth (slightly glitchy look) */
+#mouth{
+    position:absolute;
+    width:110px;
+    height:32px;
+    top:62%;
+    left:50%;
+    transform:translate(-50%,-50%);
+    overflow:hidden;
+    border-radius:16px;
+    background:#001020;
+    box-shadow:0 0 10px rgba(0,0,0,0.7);
+}
+.teeth{
+    position:absolute;
+    bottom:0;
+    width:100%;
+    height:18px;
+    background:linear-gradient(to right,
+        transparent 0%,transparent 8%,#fff 8%,#fff 17%,
+        transparent 17%,transparent 25%,#fff 25%,#fff 34%,
+        transparent 34%,transparent 42%,#fff 42%,#fff 51%,
+        transparent 51%,transparent 59%,#fff 59%,#fff 68%,
+        transparent 68%,transparent 76%,#fff 76%,#fff 85%,
+        transparent 85%,transparent 100%);
+    animation: teeth-snap 0.5s ease-in-out infinite;
+}
+
+@keyframes teeth-snap{
+    0%,100%{transform:translateY(0);}
+    50%{transform:translateY(-3px);}
+}
+
+/* Talking indicator */
+.speaking-indicator{
+    position:absolute;
+    bottom:-28px;
+    left:50%;
+    transform:translateX(-50%);
+    color:#66e0ff;
+    font-family:monospace;
+    font-size:12px;
+    text-shadow:0 0 8px #66e0ff;
+    animation:text-blink 1s infinite;
+}
+@keyframes text-blink{
+    0%,100%{opacity:1;}
+    50%{opacity:0;}
+}
+</style>
+</head>
+<body>
+
+<div class="frame" id="frame">
+<iframe id="bgmFrame" src="bgm.html" style="display:none;"></iframe>
+    <video class="background-video" autoplay muted loop playsinline preload="auto">
+        <source src="walking corridor.mp4" type="video/mp4">
+    </video>
+
+    <div class="flash-overlay" id="flash"></div>
+
+    <div class="dialogue-box" id="dialogue">
+        <span class="speaker-name" id="speaker">You</span>
+        <span class="dialogue-text typing" id="dialogueText"></span>
+        <span class="click-hint" id="clickHint">Click to continue →</span>
+    </div>
+
+    <div id="creature-container">
+        <div id="blue-body">
+            <div class="eye eye-left"><div class="pupil"></div></div>
+            <div class="eye eye-right"><div class="pupil"></div></div>
+            <div id="mouth"><div class="teeth"></div></div>
+            <div class="speaking-indicator">[REFLECTING]</div>
+        </div>
+    </div>
+</div>
+
+<!-- Reuse audio; swap files if you want a different voice or sting -->
+<audio id="warble" src="3M@ talking.mp3"></audio>
+<audio id="jumpscare" src="squeaky-jumpscare-81079.mp3"></audio>
+
+<script>
+// Helper to safely message the BGM iframe
+  function bgmSend(msg) {
+    const f = document.getElementById("bgmFrame");
+    if (f && f.contentWindow) f.contentWindow.postMessage(msg, "*");
+  }
+
+  // IMPORTANT:
+  // Autoplay rules: BGM can only start after the user interacts at least once.
+  // So we "arm" it here. The first click/tap/keydown will trigger PLAY_BGM.
+  function unlockAndPlayBgmOnce() {
+    bgmSend("PLAY_BGM");
+    document.removeEventListener("pointerdown", unlockAndPlayBgmOnce);
+    document.removeEventListener("keydown", unlockAndPlayBgmOnce);
+  }
+
+  document.addEventListener("pointerdown", unlockAndPlayBgmOnce, { once: true });
+  document.addEventListener("keydown", unlockAndPlayBgmOnce, { once: true });
+
+  // Optional: If you want BGM to ALWAYS try to play when a page loads (after it's already unlocked),
+  // uncomment the next line:
+  // window.addEventListener("load", () => bgmSend("PLAY_BGM"));
+
+window.addEventListener("load", () => {
+    frame.classList.add("fade-in");
+});
+
+const dialogueText = document.getElementById("dialogueText");
+const speakerEl = document.getElementById("speaker");
+const clickHint = document.getElementById("clickHint");
+const creature = document.getElementById("creature-container");
+const flash = document.getElementById("flash");
+const warble = document.getElementById("warble");
+const jumpscare = document.getElementById("jumpscare");
+const frame = document.getElementById("frame");
+const dialogueBox = document.getElementById("dialogue");
+
+/* ==== DIALOGUE LINES (MirrorMinion intro) ==== */
+const lines = [
+    {speaker:"You", text:"Phew, that was easy enough. I wonder how many more minions there are..."},
+    {speaker:"M1RO", text:"SHING, SHING!"},
+    {speaker:"M1RO", text:"I'm M1RO, the mirror minion!"},
+    {speaker:"M1RO", text:"Did you know, thanks to Generative AI, it's easier than ever to create convincing fake profiles and images online?"},
+    {speaker:"M1RO", text:"Fake faces, edited selfies, cloned profiles… it all starts looking \"almost\" real, doesn’t it?"},
+    {speaker:"M1RO", text:"In this next game, you’ll see pairs of images and profiles."},
+    {speaker:"M1RO", text:"Your job? Spot which one looks manipulated or untrustworthy before someone gets fooled."},
+    {speaker:"M1RO", text:"Select the Real one to score points"},
+    {speaker:"M1RO", text:"Look for weird reflections, strange hands, too-perfect details, and suspicious captions. Let’s see how sharp your eyes really are."},
+    {speaker:"M1RO", text:"Good luck, human!"}
+];
+
+let lineIndex = 0;
+let charIndex = 0;
+let isTyping = true;
+let typingInterval = null;
+let canClick = false;
+let audioUnlocked = false;
+let jumpscareDone = false;
+let jumpscarePlaying = false;
+
+/* ---- GLOBAL AUDIO UNLOCK ---- */
+function unlockAudio() {
+    if (audioUnlocked) return;
+    audioUnlocked = true;
+
+    [jumpscare, warble].forEach(a=>{
+        a.volume = 1;
+        a.play().then(()=>{
+            a.pause();
+            a.currentTime = 0;
+        }).catch(()=>{});
+    });
+}
+
+document.addEventListener("pointerdown", unlockAudio, { once:true });
+document.addEventListener("keydown", unlockAudio, { once:true });
+
+function showClickHint(){ clickHint.style.display="block"; }
+function hideClickHint(){ clickHint.style.display="none"; }
+
+function handleVoice(speaker, action){
+    if(speaker === "M1RO" && action === "start"){
+        warble.loop = true;
+        warble.currentTime = 0;
+        warble.play().catch(()=>{});
+    } 
+    if(action === "stop"){
+        warble.pause();
+        warble.currentTime = 0;
+    }
+}
+
+function fadeToMirrorGame(){
+    frame.classList.add("fade-out");
+    // TODO: change this filename if your game page is named differently
+    setTimeout(()=> window.location.href = "MirrorMinionGame.html", 1500);
+}
+
+function typeLine(){
+    const line = lines[lineIndex];
+
+    dialogueText.innerHTML = "";
+    hideClickHint();
+    speakerEl.textContent = line.speaker;
+
+    charIndex = 0;
+    isTyping = true;
+    canClick = false;
+    dialogueText.classList.add('typing');
+
+    clearInterval(typingInterval);
+    typingInterval = setInterval(()=>{
+        if(charIndex < line.text.length){
+            dialogueText.innerHTML += line.text.charAt(charIndex);
+            charIndex++;
+
+            // Start warble once per MirrorMinion line (after audio unlock)
+            if(line.speaker === "M1RO" && charIndex === 1 && audioUnlocked){
+                handleVoice("M1RO", "start");
+            }
+
+                } else {
+            clearInterval(typingInterval);
+            isTyping = false;
+            dialogueText.classList.remove('typing');
+
+            if(line.speaker === "M1RO"){
+                handleVoice("M1RO","stop");
+            }
+
+            // If this is the final line, auto-fade to MirrorMinion game
+            if(lineIndex === lines.length - 1){
+                setTimeout(()=>fadeToMirrorGame(), 1200);
+            } else {
+                // always show hint, including on the very first line
+                canClick = true;
+                showClickHint();
+            }
+        }
+
+    },30);
+}
+
+/* CLICK HANDLER */
+dialogueBox.addEventListener("click", ()=>{
+
+    const line = lines[lineIndex];
+
+    // If still typing, finish instantly
+    if(isTyping){
+        clearInterval(typingInterval);
+        dialogueText.innerHTML = line.text;
+        dialogueText.classList.remove('typing');
+        isTyping = false;
+
+        if(line.speaker === "M1RO"){
+            handleVoice("M1RO","stop");
+        }
+
+        if(lineIndex === 0){
+            // first line: we still want the hint visible
+            showClickHint();
+        } else if(lineIndex !== lines.length - 1){
+            canClick = true;
+            showClickHint();
+        }
+        return;
+    }
+
+    // If we can't click yet (e.g. during jumpscare), ignore
+    if(!canClick && !(lineIndex === 0 && !jumpscareDone)) return;
+
+    // SPECIAL CASE: after first line, trigger jumpscare on click
+    if(lineIndex === 0 && !jumpscareDone){
+        canClick = false;
+        hideClickHint();
+        jumpscarePlaying = true;
+
+        // Bring monster in + play jumpscare WITH sound (inside click)
+        creature.classList.add('fullscreen');
+        creature.style.animation = "monsterJitter 0.6s ease-in-out 3";
+
+        flash.classList.add("flash-active");
+        jumpscare.currentTime = 0;
+        jumpscare.play().catch(()=>{});
+
+        setTimeout(()=> flash.classList.remove("flash-active"), 400);
+
+        setTimeout(()=>{
+            creature.style.animation = "";
+            jumpscareDone = true;
+            jumpscarePlaying = false;
+            // Now go to next line (MirrorMinion speaks)
+            lineIndex++;
+            typeLine();
+        }, 1800);
+
+        return;
+    }
+
+    // Normal progression for other lines
+    if(lineIndex < lines.length - 1){
+        lineIndex++;
+        typeLine();
+    }
+});
+
+window.onload = typeLine;
+</script>
+</body>
+</html>

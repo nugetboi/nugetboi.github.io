@@ -1,0 +1,1001 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>MirrorMinion Game</title>
+<style>
+/* ============ GENERAL LAYOUT ============ */
+body {
+    margin: 0;
+    background: #000;
+    overflow: hidden;
+    font-family: Arial, Helvetica, sans-serif;
+    color: white;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.frame {
+    width: 960px;
+    height: 540px;
+    border: 2px solid white;
+    position: relative;
+    overflow: hidden;
+    background: radial-gradient(circle at top, #111 0%, #000 60%, #000 100%);
+}
+
+/* simple helper fade for overlays */
+@keyframes fadeInSlow { from {opacity:0;} to {opacity:1;} }
+.fadeInSlow { animation: fadeInSlow .7s forwards; }
+
+@keyframes fadeOutScreen { from {opacity:1;} to {opacity:0;} }
+.fadeOut { animation: fadeOutScreen 1s forwards; }
+
+/* ============ INTRO: M1RO CREATURE WITH INSTRUCTIONS ============ */
+
+#instructionScreen {
+    position:absolute;
+    inset:0;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    z-index:50;
+    opacity:0; /* will fade in */
+}
+
+/* fade-in animation for intro */
+@keyframes introFade {
+    from { opacity:0; transform:scale(0.9); }
+    to   { opacity:1; transform:scale(1); }
+}
+.fadeInIntro {
+    animation:introFade 1s ease-out forwards;
+}
+
+#instructionCreature {
+    position:relative;
+    width:480px;
+    height:480px;
+}
+
+/* bigger blue oval body */
+#blue-body {
+    position:absolute;
+    width:450px;
+    height:450px;
+    left:50%;
+    top:50%;
+    transform:translate(-50%,-50%);
+    background:radial-gradient(circle at 30% 20%, #88ddff, #0050a0);
+    border-radius:50%;
+    box-shadow:0 0 35px rgba(0,170,255,0.9);
+    border:3px solid #001020;
+}
+
+/* Eyes (pushed more to the sides, higher up) */
+.eye{
+    position:absolute;
+    width:44px;
+    height:44px;
+    background: radial-gradient(circle,#ffffff 15%,#ff2222 45%,#4a0000 70%);
+    border-radius:50%;
+    top:26%;
+    transform:translateY(-50%);
+    box-shadow:0 0 15px #ff2222;
+}
+.eye-left{ left:20px; }
+.eye-right{ right:20px; }
+
+.pupil{
+    position:absolute;
+    width:14px;
+    height:14px;
+    background:#000;
+    border-radius:50%;
+    top:50%;
+    left:50%;
+    transform:translate(-50%,-50%);
+}
+
+/* instructions inside body */
+#mirrorInstructions {
+    position:absolute;
+    inset:18% 16%;
+    border-radius:40px;
+    padding:10px 18px;
+    text-align:center;
+    font-size:20px;
+    line-height:1.3;
+}
+
+#mirrorInstructions h2 {
+    margin:0 0 6px 0;
+    font-size:18px;
+    text-decoration:underline;
+}
+
+#mirrorInstructions p {
+    margin:0;
+}
+
+.start-btn {
+    margin-top:10px;
+    padding:6px 14px;
+    border: 2px solid white;
+    background: transparent;
+    color: white;
+    font-size: 20px;
+    border-radius: 10px;
+    cursor: pointer;
+}
+.start-btn:hover { background:white;color:black; }
+
+.fadeOutIntro { animation: fadeAway 0.8s forwards; }
+@keyframes fadeAway { to { opacity:0; } }
+
+/* ============ GAME SCREEN ============ */
+
+.game-screen {
+    position:absolute;
+    inset:0;
+    display:none;
+}
+
+/* header: select real image */
+#gameHeader {
+    position:absolute;
+    top:14px;
+    left:50%;
+    transform:translateX(-50%);
+    font-size:40px;
+    font-weight:bold;
+}
+
+/* round counter just below header */
+#roundCounter {
+    position:absolute;
+    top:60px;
+    left:50%;
+    transform:translateX(-50%);
+    font-size:14px;
+    opacity:0.85;
+}
+
+/* layout for pair of ovals */
+.pair-container {
+    position:absolute;
+    top:45%;
+    left:50%;
+    transform:translate(-50%,-50%);
+    display:flex;
+    gap:80px;
+    align-items:center;
+}
+
+/* label above each side, e.g. "Image A / Image B" */
+.side-label {
+    text-align:center;
+    margin-bottom:6px;
+    font-size:14px;
+    letter-spacing:0.5px;
+}
+
+/* card for each image */
+.card {
+    width:220px;
+    height:280px;
+    perspective:1000px;
+    cursor:pointer;
+}
+
+/* inner wrapper for flip animation */
+.card-inner {
+    position:relative;
+    width:100%;
+    height:100%;
+    transition:transform 0.6s;
+    transform-style:preserve-3d;
+}
+
+/* when clicked */
+.card.flipped .card-inner {
+    transform:rotateY(180deg);
+}
+
+/* front & back faces */
+.card-face {
+    position:absolute;
+    width:100%;
+    height:100%;
+    backface-visibility:hidden;
+    border-radius:50%;
+    overflow:hidden;
+    border:3px solid #88ddff;
+    box-shadow:0 0 18px rgba(0,170,255,0.8);
+    display:flex;
+    justify-content:center;
+    align-items:center;
+}
+
+/* FRONT = the actual image */
+.card-front {
+    background:#000;
+}
+
+/* BACK = result (AI / REAL) */
+.card-back {
+    background:#021325;
+    transform:rotateY(180deg);
+    flex-direction:column;
+    text-align:center;
+    padding:12px;
+    box-sizing:border-box;
+}
+
+.card-back h3 {
+    margin:0 0 4px 0;
+}
+
+.card-back p {
+    margin:0;
+    font-size:12px;
+}
+
+/* images inside */
+.card-front img {
+    width:100%;
+    height:100%;
+    object-fit:cover;
+}
+
+/* disable pointer when locked */
+.card.disabled {
+    pointer-events:none;
+    opacity:0.7;
+}
+
+/* highlight for REAL (green) and AI (red) */
+.card-real .card-face {
+    border-color:#3CFF8F;
+    box-shadow:0 0 18px rgba(0,255,143,0.9);
+}
+
+.card-ai .card-face {
+    border-color:#FF4B6E;
+    box-shadow:0 0 18px rgba(255,75,110,0.9);
+}
+
+/* feedback area below pair */
+#roundFeedbackArea {
+    position:absolute;
+    bottom:30px;
+    left:50%;
+    transform:translateX(-50%);
+    text-align:center;
+}
+
+#roundFeedback {
+    font-size:14px;
+    white-space:pre-line;
+    margin-bottom:8px;
+}
+
+#nextButton {
+    padding:6px 16px;
+    border:2px solid white;
+    background:transparent;
+    color:white;
+    border-radius:10px;
+    cursor:pointer;
+    display:none;
+}
+#nextButton:hover {
+    background:white;
+    color:black;
+}
+
+/* ============ SCORE SCREEN ============ */
+
+#scoreStandalone {
+    position:absolute;
+    inset:0;
+    background:#000;
+    color:white;
+    display:none;
+    flex-direction:column;
+    justify-content:center;
+    align-items:center;
+    text-align:center;
+    gap:10px;
+    animation: fadeInSlow .7s forwards;
+    z-index:120;
+}
+
+#scoreStandalone h1{
+    margin:0 0 8px 0;
+}
+#scoreStandalone h2{
+    margin:0 0 6px 0;
+}
+#scoreStandalone p{
+    max-width:500px;
+    font-size:14px;
+}
+
+#scoreStandalone button{
+    margin-top:15px;
+    padding:8px 20px;
+    border:2px solid white;
+    background:transparent;
+    color:white;
+    border-radius:10px;
+    cursor:pointer;
+}
+#scoreStandalone button:hover{
+    background:white;
+    color:black;
+}
+
+/* ============ ENDING SCREEN: MIRROR SHATTER ============ */
+
+.ending-screen {
+    position:absolute;
+    inset:0;
+    display:none;
+    overflow:hidden;
+    background:#000;
+    z-index:130;
+}
+
+/* container for mirror creature */
+#mirrorEndingCreature {
+    position:absolute;
+    top:50%;
+    left:50%;
+    transform:translate(-50%,-50%);
+    width:420px;
+    height:420px;
+}
+
+/* whole oval (before shatter) */
+#mirrorWhole {
+    position:absolute;
+    width:320px;
+    height:320px;
+    left:50%;
+    top:50%;
+    transform:translate(-50%,-50%);
+    background:radial-gradient(circle at 30% 20%, #aee7ff, #004a90);
+    border-radius:50%;
+    box-shadow:0 0 35px rgba(0,170,255,0.9);
+    border:3px solid #001020;
+}
+
+/* mirror eyes */
+.mirror-eye {
+    position:absolute;
+    width:38px;
+    height:38px;
+    background: radial-gradient(circle,#ffffff 15%,#ff2222 45%,#4a0000 70%);
+    border-radius:50%;
+    top:32%;
+    transform:translateY(-50%);
+    box-shadow:0 0 15px #ff2222;
+}
+
+.mirror-eye.left  { left:18%; }
+.mirror-eye.right { right:18%; }
+
+.mirror-eye .pupil {
+    position:absolute;
+    width:12px;
+    height:12px;
+    background:#000;
+    border-radius:50%;
+    top:50%;
+    left:50%;
+    transform:translate(-50%,-50%);
+}
+
+/* little mouth */
+#mirrorMouth {
+    position:absolute;
+    width:90px;
+    height:26px;
+    top:60%;
+    left:50%;
+    transform:translate(-50%,-50%);
+    border-radius:16px;
+    background:#001020;
+    overflow:hidden;
+}
+
+#mirrorMouth::after {
+    content:"";
+    position:absolute;
+    bottom:0;
+    width:100%;
+    height:16px;
+    background:linear-gradient(to right,
+        transparent 0%,transparent 8%,#fff 8%,#fff 17%,
+        transparent 17%,transparent 25%,#fff 25%,#fff 34%,
+        transparent 34%,transparent 42%,#fff 42%,#fff 51%,
+        transparent 51%,transparent 59%,#fff 59%,#fff 68%,
+        transparent 68%,transparent 76%,#fff 76%,#fff 85%,
+        transparent 85%,transparent 100%);
+}
+
+/* shards (mirror pieces) */
+.shard {
+    position:absolute;
+    width:120px;
+    height:140px;
+    background:linear-gradient(135deg, rgba(220,245,255,0.95), rgba(0,80,150,0.8));
+    border:2px solid rgba(180,220,255,0.9);
+    box-shadow:0 0 16px rgba(180,220,255,0.9);
+    opacity:0;
+}
+
+/* shard shapes using clip-path */
+.shard.s1 { top:90px; left:160px;  clip-path:polygon(0 0, 100% 0, 75% 70%, 10% 100%); }
+.shard.s2 { top:110px; left:230px; clip-path:polygon(10% 0, 100% 10%, 100% 80%, 30% 100%); }
+.shard.s3 { top:160px; left:140px; clip-path:polygon(0 10%, 90% 0, 100% 60%, 20% 100%); }
+.shard.s4 { top:150px; left:210px; clip-path:polygon(20% 0, 100% 15%, 80% 100%, 0 70%); }
+.shard.s5 { top:190px; left:180px; clip-path:polygon(0 0, 80% 10%, 100% 80%, 10% 100%); }
+.shard.s6 { top:120px; left:100px; clip-path:polygon(20% 0, 100% 30%, 80% 100%, 0 80%); }
+
+/* shard animations */
+@keyframes shardFly1 {
+    0% { transform:translate(0,0) rotate(0deg);   opacity:1; }
+    100%{ transform:translate(-180px,-100px) rotate(-25deg); opacity:0; }
+}
+@keyframes shardFly2 {
+    0% { transform:translate(0,0) rotate(0deg);   opacity:1; }
+    100%{ transform:translate(190px,-80px) rotate(30deg);    opacity:0; }
+}
+@keyframes shardFly3 {
+    0% { transform:translate(0,0) rotate(0deg);   opacity:1; }
+    100%{ transform:translate(-160px,120px) rotate(-18deg);  opacity:0; }
+}
+@keyframes shardFly4 {
+    0% { transform:translate(0,0) rotate(0deg);   opacity:1; }
+    100%{ transform:translate(160px,140px) rotate(22deg);    opacity:0; }
+}
+@keyframes shardFly5 {
+    0% { transform:translate(0,0) rotate(0deg);   opacity:1; }
+    100%{ transform:translate(0,200px) rotate(10deg);        opacity:0; }
+}
+@keyframes shardFly6 {
+    0% { transform:translate(0,0) rotate(0deg);   opacity:1; }
+    100%{ transform:translate(-40px,-210px) rotate(-30deg);  opacity:0; }
+}
+
+/* fade out the whole mirror as it shatters */
+@keyframes mirrorFade {
+    0% { opacity:1; transform:translate(-50%,-50%) scale(1); }
+    100%{ opacity:0; transform:translate(-50%,-50%) scale(0.8); }
+}
+
+.mirror-shatter #mirrorWhole {
+    animation: mirrorFade 1.2s ease-out forwards;
+}
+
+.mirror-shatter .shard.s1 { opacity:1; animation: shardFly1 1.8s ease-out forwards; }
+.mirror-shatter .shard.s2 { opacity:1; animation: shardFly2 1.9s ease-out forwards; }
+.mirror-shatter .shard.s3 { opacity:1; animation: shardFly3 2.0s ease-out forwards; }
+.mirror-shatter .shard.s4 { opacity:1; animation: shardFly4 2.1s ease-out forwards; }
+.mirror-shatter .shard.s5 { opacity:1; animation: shardFly5 2.0s ease-out forwards; }
+.mirror-shatter .shard.s6 { opacity:1; animation: shardFly6 2.2s ease-out forwards; }
+
+/* ========= DIALOGUE BOX FOR ENDING ========= */
+.dialogue-box {
+    width: 900px;
+    min-height: 90px;
+    background: #2a2a2a;
+    border: 2px solid white;
+    border-radius: 25px;
+    position: absolute;
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 15px 20px;
+    box-sizing: border-box;
+    color: white;
+    font-size: 16px;
+    display: flex;
+    flex-direction: column;
+    cursor: pointer;
+    z-index: 150;
+}
+
+.speaker-name {
+    font-weight: bold;
+    text-decoration: underline;
+    margin-bottom: 5px;
+}
+
+.dialogue-text {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+    white-space: pre-wrap;
+    padding-right: 80px;
+}
+
+.typing::after {
+    content: '|';
+    animation: blink 0.7s infinite;
+    margin-left: 2px;
+}
+
+.click-hint {
+    position: absolute;
+    bottom: 10px;
+    right: 15px;
+    font-size: 14px;
+    color: #ccc;
+    opacity: 0.8;
+    display: none;
+}
+
+@keyframes blink {
+    0%,50%,100% {opacity:1;}
+    25%,75% {opacity:0;}
+}
+</style>
+</head>
+<body>
+
+<div class="frame" id="frame">
+<iframe id="bgmFrame" src="bgm.html" style="display:none;"></iframe>
+    <!-- INTRO: M1RO WITH INSTRUCTIONS -->
+    <div id="instructionScreen">
+        <div id="instructionCreature">
+            <div id="blue-body">
+                <div class="eye eye-left"><div class="pupil"></div></div>
+                <div class="eye eye-right"><div class="pupil"></div></div>
+                <div id="mouth"><div class="teeth"></div></div>
+
+                <div id="mirrorInstructions">
+                    <h2>M1RO's Mirror Match</h2>
+                    <p>
+                        You will see <b>6 pairs</b> of images.<br>
+                        <b>One is AI-generated</b> and the other is real.
+                    </p>
+                    <p style="margin-top:6px;">
+                        Click the image that you think is <b>real</b>.<br>
+                        If you're right, you score a point!
+                    </p>
+                    <button class="start-btn" onclick="startGame()">Start Game</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- GAME SCREEN -->
+    <div class="game-screen" id="gameScreen">
+
+        <div id="gameHeader">Select the real image</div>
+        <div id="roundCounter">Round 1 / 6</div>
+
+        <div class="pair-container">
+            <!-- LEFT SIDE -->
+            <div>
+                <div class="side-label">Image A</div>
+                <div class="card" id="cardLeft" data-side="left">
+                    <div class="card-inner">
+                        <div class="card-face card-front">
+                            <img id="imgLeft" src="" alt="Left image">
+                        </div>
+                        <div class="card-face card-back">
+                            <h3 id="leftResultTitle"></h3>
+                            <p id="leftResultText"></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- RIGHT SIDE -->
+            <div>
+                <div class="side-label">Image B</div>
+                <div class="card" id="cardRight" data-side="right">
+                    <div class="card-inner">
+                        <div class="card-face card-front">
+                            <img id="imgRight" src="" alt="Right image">
+                        </div>
+                        <div class="card-face card-back">
+                            <h3 id="rightResultTitle"></h3>
+                            <p id="rightResultText"></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- FEEDBACK + CONTINUE -->
+        <div id="roundFeedbackArea">
+            <div id="roundFeedback"></div>
+            <button id="nextButton" onclick="nextPair()">Continue</button>
+        </div>
+
+        <!-- AUDIO -->
+        <audio id="soundCorrect" src="correct-6033.mp3"></audio>
+        <audio id="soundWrong" src="wrong-47985.mp3"></audio>
+        <!-- M1RO talking warble for ending -->
+        <audio id="warble" src="3M@ talking.mp3"></audio>
+
+    </div>
+
+    <!-- SCORE SCREEN -->
+    <div id="scoreStandalone">
+        <h1>Mirror Match Results</h1>
+        <h2 id="finalScore"></h2>
+        <p id="finalFeedback"></p>
+        <button onclick="scoreContinue()">Continue</button>
+    </div>
+
+    <!-- ENDING SCREEN: MIRROR SHATTER + DIALOGUE -->
+    <div id="endingScreen" class="ending-screen">
+        <div id="mirrorEndingCreature">
+            <div id="mirrorWhole"></div>
+            <div class="mirror-eye left"><div class="pupil"></div></div>
+            <div class="mirror-eye right"><div class="pupil"></div></div>
+            <div id="mirrorMouth"></div>
+
+            <!-- mirror shards -->
+            <div class="shard s1"></div>
+            <div class="shard s2"></div>
+            <div class="shard s3"></div>
+            <div class="shard s4"></div>
+            <div class="shard s5"></div>
+            <div class="shard s6"></div>
+        </div>
+
+        <div class="dialogue-box" id="endingDialogueBox">
+            <span class="speaker-name" id="endingSpeaker">M1RO</span>
+            <span class="dialogue-text typing" id="endingText"></span>
+            <span class="click-hint" id="endingClickHint">Click to continue →</span>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    // Helper to safely message the BGM iframe
+  function bgmSend(msg) {
+    const f = document.getElementById("bgmFrame");
+    if (f && f.contentWindow) f.contentWindow.postMessage(msg, "*");
+  }
+
+  // IMPORTANT:
+  // Autoplay rules: BGM can only start after the user interacts at least once.
+  // So we "arm" it here. The first click/tap/keydown will trigger PLAY_BGM.
+  function unlockAndPlayBgmOnce() {
+    bgmSend("PLAY_BGM");
+    document.removeEventListener("pointerdown", unlockAndPlayBgmOnce);
+    document.removeEventListener("keydown", unlockAndPlayBgmOnce);
+  }
+
+  document.addEventListener("pointerdown", unlockAndPlayBgmOnce, { once: true });
+  document.addEventListener("keydown", unlockAndPlayBgmOnce, { once: true });
+
+  // Optional: If you want BGM to ALWAYS try to play when a page loads (after it's already unlocked),
+  // uncomment the next line:
+  // window.addEventListener("load", () => bgmSend("PLAY_BGM"));
+
+// ========== DATA: 6 PAIRS ==========
+const pairs = [
+    {
+        left:  {src:"real1.jpg", isAI:false, explain:"This one is a real photo. Notice how the details feel natural."},
+        right: {src:"ai1.jpg",   isAI:true,  explain:"AI-generated – pay close attention to the extra hands and distorted fingers."}
+    },
+    {
+        left:  {src:"ai2.png",   isAI:true,  explain:"AI-generated – those laptops dont exist yet and coffee cups can't float."},
+        right: {src:"real2.jpg", isAI:false, explain:"Real photo. The lighting and features aren't exaggerated."}
+    },
+    {
+        left:  {src:"real3.jpg", isAI:false, explain:"Real photo! Look at the spelling at the back, everything looks right."},
+        right: {src:"ai3.png",   isAI:true,  explain:"AI-generated – Look at the spelling at the back, something is off."}
+    },
+    {
+        left:  {src:"ai4.png",   isAI:true,  explain:"AI-generated – look at the face..."},
+        right: {src:"real4.jpg", isAI:false, explain:"Real photo. Normal facial features."}
+    },
+    {
+        left:  {src:"real5.jpg", isAI:false, explain:"Real – natural lighting."},
+        right: {src:"ai5.png",   isAI:true,  explain:"AI-generated – lighting is off and weird special effects added."}
+    },
+    {
+        left:  {src:"ai6.png",   isAI:true,  explain:"AI-generated – where are their heads!"},
+        right: {src:"real6.jpg", isAI:false, explain:"Real photo. Natural image with no distortions."}
+    }
+];
+// Collect all image file paths from pairs
+const imageSrcs = [...new Set(
+  pairs.flatMap(p => [p.left.src, p.right.src])
+)];
+
+// Simple preloader
+function preloadImages(srcArray, callback) {
+  let loaded = 0;
+  const total = srcArray.length;
+
+  srcArray.forEach(src => {
+    const img = new Image();
+    img.onload = img.onerror = () => {
+      loaded++;
+      if (loaded === total && typeof callback === "function") {
+        callback();
+      }
+    };
+    img.src = src;
+  });
+}
+
+let currentIndex = 0;
+let correctCount = 0;
+let roundLocked = false;
+
+const instructionScreen = document.getElementById("instructionScreen");
+const gameScreen = document.getElementById("gameScreen");
+const roundCounter = document.getElementById("roundCounter");
+
+const cardLeft  = document.getElementById("cardLeft");
+const cardRight = document.getElementById("cardRight");
+const imgLeft   = document.getElementById("imgLeft");
+const imgRight  = document.getElementById("imgRight");
+
+const leftResultTitle  = document.getElementById("leftResultTitle");
+const leftResultText   = document.getElementById("leftResultText");
+const rightResultTitle = document.getElementById("rightResultTitle");
+const rightResultText  = document.getElementById("rightResultText");
+
+const roundFeedback = document.getElementById("roundFeedback");
+const nextButton    = document.getElementById("nextButton");
+
+const soundCorrect = document.getElementById("soundCorrect");
+const soundWrong   = document.getElementById("soundWrong");
+const warble       = document.getElementById("warble");
+
+window.addEventListener("load", () => {
+    instructionScreen.classList.add("fadeInIntro");
+
+    // Start preloading all game images in the background
+    preloadImages(imageSrcs);
+});
+
+
+function startGame(){
+    instructionScreen.classList.add("fadeOutIntro");
+    setTimeout(()=>{
+        instructionScreen.style.display = "none";
+        gameScreen.style.display = "block";
+        loadPair();
+    }, 800);
+}
+
+function loadPair(){
+    roundLocked = false;
+
+    // reset cards
+    [cardLeft, cardRight].forEach(card => {
+        card.classList.remove("flipped","disabled","card-real","card-ai");
+    });
+
+    // clear feedback + hide next button
+    roundFeedback.textContent = "";
+    nextButton.style.display = "none";
+
+    const pair = pairs[currentIndex];
+
+    // set images
+    imgLeft.src  = pair.left.src;
+    imgRight.src = pair.right.src;
+
+    // store AI flags via dataset
+    cardLeft.dataset.isAI  = pair.left.isAI  ? "true" : "false";
+    cardRight.dataset.isAI = pair.right.isAI ? "true" : "false";
+
+    // set back-face titles
+    leftResultTitle.textContent  = pair.left.isAI  ? "AI-generated" : "Real image";
+    rightResultTitle.textContent = pair.right.isAI ? "AI-generated" : "Real image";
+
+    // explanations on back
+    leftResultText.textContent  = pair.left.explain;
+    rightResultText.textContent = pair.right.explain;
+
+    // update round counter
+    roundCounter.textContent = `Round ${currentIndex+1} / ${pairs.length}`;
+}
+
+function handleCardClick(card, side){
+    if(roundLocked) {
+        // allow re-flip (front/back) after answer is locked
+        card.classList.toggle("flipped");
+        return;
+    }
+
+    // first time click = answering
+    roundLocked = true;
+
+    // flip selected & also flip the other after slight delay
+    card.classList.add("flipped");
+    const otherCard = (side === "left") ? cardRight : cardLeft;
+    setTimeout(()=> otherCard.classList.add("flipped"), 150);
+
+    const isAIChosen = card.dataset.isAI === "true";
+    const pair = pairs[currentIndex];
+
+    // classify cards for highlight: REAL (green) / AI (red)
+    if(cardLeft.dataset.isAI === "true"){
+        cardLeft.classList.add("card-ai");
+    } else {
+        cardLeft.classList.add("card-real");
+    }
+    if(cardRight.dataset.isAI === "true"){
+        cardRight.classList.add("card-ai");
+    } else {
+        cardRight.classList.add("card-real");
+    }
+
+    const chosenExplain = (side === "left") ? pair.left.explain : pair.right.explain;
+    const otherExplain  = (side === "left") ? pair.right.explain : pair.left.explain;
+
+    // correct = real image, wrong = AI image
+    const correct = !isAIChosen;  // chosen is real => correct
+    if(correct) correctCount++;
+
+    // audio
+    if(correct){
+        soundCorrect.currentTime = 0;
+        soundCorrect.play().catch(()=>{});
+    } else {
+        soundWrong.currentTime = 0;
+        soundWrong.play().catch(()=>{});
+    }
+
+    // small text feedback
+    if(correct){
+        roundFeedback.textContent = `Correct! You picked the real image.\n${chosenExplain}`;
+    } else {
+        roundFeedback.textContent = `Wrong – that one is AI-generated.\nThe real photo was the other image.\n\nHint: ${otherExplain}`;
+    }
+
+    // show continue button
+    nextButton.style.display = "inline-block";
+}
+
+cardLeft.addEventListener("click", ()=> handleCardClick(cardLeft, "left"));
+cardRight.addEventListener("click",()=> handleCardClick(cardRight,"right"));
+
+function nextPair(){
+    currentIndex++;
+    if(currentIndex >= pairs.length){
+        showScore();
+        return;
+    }
+    loadPair();
+}
+
+function showScore(){
+    gameScreen.style.display = "none";
+    const total = pairs.length;
+    const scoreText = `You identified ${correctCount} / ${total} real images correctly`;
+
+    let feedback = "";
+    if(correctCount <= 2){
+        feedback = "AI fooled you a few times there. Revisit the clues and try again!";
+    } else if(correctCount <= 4){
+        feedback = "Not bad! You’re starting to see through the mirror, but some tricks still slipped by.";
+    } else {
+        feedback = "Sharp eyes! You’re great at telling real from AI-generated visuals. M1RO is impressed… and slightly scared.";
+    }
+
+    document.getElementById("finalScore").textContent = scoreText;
+    document.getElementById("finalFeedback").textContent = feedback;
+    document.getElementById("scoreStandalone").style.display = "flex";
+}
+
+/* ========= ENDING: SCORE -> MIRROR SHATTER SCENE ========= */
+const endingScreen       = document.getElementById("endingScreen");
+const mirrorEndingCreature = document.getElementById("mirrorEndingCreature");
+const endingDialogueBox  = document.getElementById("endingDialogueBox");
+const endingSpeakerEl    = document.getElementById("endingSpeaker");
+const endingTextEl       = document.getElementById("endingText");
+const endingClickHint    = document.getElementById("endingClickHint");
+
+const endLines = [
+    { speaker: "M1RO", text: "Nooo… my perfect reflections… shattered!" },
+    { speaker: "M1RO", text: "Looks like you CAN tell what’s real from what’s fake." },
+    { speaker: "M1RO", text: "Remember these clues the next time a \"too perfect\" image shows up on your feed." }
+];
+
+let endLineIndex = 0;
+let endCharIndex = 0;
+let endTyping = false;
+let endInterval = null;
+
+function showEndClickHint(){ endingClickHint.style.display="block"; }
+function hideEndClickHint(){ endingClickHint.style.display="none"; }
+
+function scoreContinue(){
+    document.getElementById("scoreStandalone").style.display = "none";
+    gameScreen.style.display = "none";
+
+    endingScreen.style.display = "block";
+    endingScreen.classList.add("fadeInSlow");
+
+    startEndingSequence();
+}
+
+function startEndingSequence(){
+    // trigger mirror shatter
+    mirrorEndingCreature.classList.add("mirror-shatter");
+    // start dialogue
+    typeEndingLine();
+}
+
+function typeEndingLine(){
+    const line = endLines[endLineIndex];
+    endingSpeakerEl.textContent = line.speaker;
+    endingTextEl.textContent = "";
+    hideEndClickHint();
+
+    endCharIndex = 0;
+    endTyping = true;
+    endingTextEl.classList.add("typing");
+
+    clearInterval(endInterval);
+    endInterval = setInterval(()=>{
+        if(endCharIndex < line.text.length){
+            endingTextEl.textContent += line.text.charAt(endCharIndex);
+            endCharIndex++;
+
+            if(line.speaker === "M1RO" && endCharIndex === 1){
+                warble.currentTime = 0;
+                warble.loop = true;
+                warble.play().catch(()=>{});
+            }
+        } else {
+            clearInterval(endInterval);
+            endTyping = false;
+            endingTextEl.classList.remove("typing");
+            warble.pause();
+            warble.currentTime = 0;
+            showEndClickHint();
+        }
+    }, 30);
+}
+
+endingDialogueBox.addEventListener("click", () => {
+    const line = endLines[endLineIndex];
+
+    if(endTyping){
+        clearInterval(endInterval);
+        endingTextEl.textContent = line.text;
+        endingTextEl.classList.remove("typing");
+        endTyping = false;
+        warble.pause();
+        warble.currentTime = 0;
+        showEndClickHint();
+        return;
+    }
+
+    if(endLineIndex < endLines.length - 1){
+        endLineIndex++;
+        typeEndingLine();
+    } else {
+        hideEndClickHint();
+        endingScreen.classList.add("fadeOut");
+        setTimeout(()=>{
+            // CHANGE THIS to your actual next page
+            window.location.href = "puppetmaster67.html";
+        }, 1000);
+    }
+});
+</script>
+
+</body>
+</html>

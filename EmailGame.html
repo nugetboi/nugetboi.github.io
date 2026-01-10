@@ -1,0 +1,941 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Email Game</title>
+
+<style>
+body {
+    margin: 0;
+    background: #000;
+    overflow: hidden;
+    font-family: Arial, Helvetica, sans-serif;
+    color: white;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.frame {
+    width: 960px;
+    height: 540px;
+    border: 2px solid white;
+    position: relative;
+    overflow: hidden;
+}
+
+.scale-wrapper{
+    position:absolute;
+    top:50%;
+    left:50%;
+    width:640px;
+    height:360px;
+    transform:translate(-50%,-50%) scale(1.5);
+    transform-origin:center;
+}
+
+/* ================= STILL MONSTER (INTRO) ================= */
+.creature {
+    position:absolute;
+    top:50%;
+    left:50%;
+    transform:translate(-50%,-50%);
+    width:450px;
+    height:420px;
+}
+
+.wing-left-1,
+.wing-left-2,
+.wing-left-3,
+.wing-right-1,
+.wing-right-2,
+.wing-right-3 {
+    position:absolute;
+    filter:drop-shadow(0 0 12px #f00);
+    z-index: 50;
+}
+
+.wing-left-1{
+    width:110px;height:160px;
+    background:linear-gradient(135deg, rgba(255,0,0,0.5), rgba(180,0,0,0.2));
+    clip-path: polygon(30% 0%,100% 30%,90% 100%,0% 95%);
+    top:140px;left:-20px;
+}
+.wing-left-2{
+    width:95px;height:120px;
+    background:linear-gradient(125deg, rgba(255,50,50,0.3), rgba(180,0,0,0.3));
+    clip-path: polygon(40% 5%,100% 25%,85% 100%,10% 90%);
+    top:165px;left:-35px;
+}
+.wing-left-3{
+    width:80px;height:100px;
+    background:linear-gradient(130deg, rgba(220,0,0,0.35), rgba(255,50,50,0.25));
+    clip-path: polygon(35% 10%,100% 35%,80% 100%,5% 85%);
+    top:180px;left:-50px;
+}
+
+.wing-right-1{
+    width:100px;height:150px;
+    background:linear-gradient(225deg, rgba(255,0,0,0.35), rgba(180,0,0,0.25));
+    clip-path: polygon(0% 30%,70% 0%,100% 95%,10% 100%);
+    top:140px;right:-20px;
+}
+.wing-right-2{
+    width:85px;height:130px;
+    background:linear-gradient(235deg, rgba(255,50,50,0.3), rgba(180,0,0,0.3));
+    clip-path: polygon(0% 25%,60% 5%,90% 90%,15% 100%);
+    top:160px;right:-35px;
+}
+.wing-right-3{
+    width:75px;height:110px;
+    background:linear-gradient(230deg, rgba(220,0,0,0.4), rgba(255,50,50,0.2));
+    clip-path: polygon(0% 35%,65% 10%,95% 85%,20% 100%);
+    top:180px;right:-50px;
+}
+
+/* Instruction Envelope */
+#envelope{
+    position:absolute;
+    width:350px;
+    height:260px;
+    left:50%;
+    top:50%;
+    transform:translate(-50%,-50%);
+    background:linear-gradient(135deg,#440000,#880000);
+    border:4px solid #000;
+    box-shadow:0 0 20px rgba(255,0,0,0.5);
+    border-radius:6px;
+    padding:12px;
+    box-sizing:border-box;
+    text-align:center;
+}
+
+#envelope h2{
+    margin-top:0;
+    font-size:20px;
+    text-decoration:underline;
+}
+
+.instructions{
+    font-size:13px;
+    line-height:1.3;
+}
+
+/* Eyes */
+.eye{
+    position:absolute;
+    width:40px;
+    height:40px;
+    background: radial-gradient(circle,#fff 20%,#f00 40%,#000 60%);
+    border-radius:50%;
+    top:50%;
+    transform:translateY(-50%);
+    box-shadow:0 0 15px #f00;
+    z-index: 50;
+}
+.eye-left{left:35px;}
+.eye-right{right:35px;}
+
+/* Button */
+.start-btn {
+    margin-top:8px;
+    padding:6px 14px;
+    border: 2px solid white;
+    background: transparent;
+    color: white;
+    font-size: 14px;
+    border-radius: 10px;
+    cursor: pointer;
+}
+.start-btn:hover { background:white;color:black; }
+
+/* Fade Animation */
+.fadeOut { animation: fadeAway 1s forwards; }
+@keyframes fadeAway { to { opacity: 0; } }
+
+@keyframes fadeInSlow { 
+    from { opacity:0; } 
+    to { opacity:1; } 
+}
+
+/* helper class for fade-in */
+.fadeInSlow {
+    animation: fadeInSlow 0.7s forwards;
+}
+
+/* ================= GAME ================= */
+.game-screen {
+    width: 100%;
+    height: 100%;
+    display: none;
+    position: relative;
+}
+
+/* EMAIL */
+.email {
+    width: 500px;
+    min-height: 180px;
+    background: #fff;
+    border-radius: 10px;
+    position: absolute;
+    top: 40px;
+    left: 50%;
+    transform: translateX(-50%);
+    color: #000;
+    padding: 0;
+    box-sizing: border-box;
+    cursor: grab;
+    z-index: 90;
+}
+
+/* Gmail Header */
+.gmail-header {
+    display: flex;
+    align-items: center;
+    padding: 10px 12px;
+    border-bottom: 1px solid #ddd;
+}
+
+.gmail-icon {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: #d44638;
+    color: white;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    font-weight:bold;
+    margin-right:8px;
+    font-size: 14px;
+}
+
+.gmail-info { flex:1; }
+.gmail-name { font-weight:bold; font-size:13px; }
+.gmail-email { font-size:11px; color:#555; }
+.gmail-time { font-size:11px; color:#777; }
+
+/* Subject + Content */
+.gmail-body{ padding:12px; }
+.gmail-subject{ font-weight:bold; margin-bottom:4px; font-size:14px; }
+.gmail-body p{ font-size:12px; }
+
+/* IMAGE BINS */
+.bin {
+    width: 120px;
+    height: 90px;
+    position: absolute;
+    bottom: 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.bin img { width: 100%; height: 100%; object-fit: contain; }
+
+/* Only scale on hover while dragging */
+.bin.hover { transform: scale(1.3); }
+
+.safe { left: 160px; }
+.suspicious { right: 160px; }
+
+/* Popup (per-email feedback) */
+.popup {
+    width: 500px;
+    height: 220px;
+    background: rgba(0,0,0,0.9);
+    border: 3px solid white;
+    border-radius: 15px;
+    text-align: center;
+    padding: 20px;
+    box-sizing: border-box;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    display: none;
+}
+
+.popup button {
+    margin-top: 15px;
+    padding: 8px 20px;
+    border: 2px solid white;
+    background: transparent;
+    color: white;
+    border-radius: 10px;
+    cursor: pointer;
+}
+
+.popup button:hover {
+    background: white;
+    color: black;
+}
+
+/* ================= STANDALONE SCORE SCREEN ================= */
+#scoreStandalone{
+    position:absolute;
+    inset:0;
+    background:#000;
+    color:white;
+    display:none;
+    flex-direction:column;
+    justify-content:center;
+    align-items:center;
+    text-align:center;
+    gap:10px;
+    animation: fadeInSlow .7s forwards;
+    z-index: 120;
+}
+
+#scoreStandalone h1{
+    margin:0 0 8px 0;
+}
+#scoreStandalone h2{
+    margin:0 0 6px 0;
+}
+#scoreStandalone p{
+    max-width:500px;
+    font-size:14px;
+}
+
+#scoreStandalone button{
+    margin-top:15px;
+    padding:8px 20px;
+    border:2px solid white;
+    background:transparent;
+    color:white;
+    border-radius:10px;
+    cursor:pointer;
+}
+#scoreStandalone button:hover{
+    background:white;
+    color:black;
+}
+
+/* ================= ENDING SCREEN (BREAKING MONSTER + DIALOGUE) ================= */
+.ending-screen{
+    position:absolute;
+    inset:0;
+    display:none;
+    overflow:hidden;
+    background:#000;
+    z-index:130;
+}
+
+/* Ending creature pieces */
+.ending-creature{
+    position:absolute;
+    top:50%;
+    left:50%;
+    transform:translate(-50%,-50%);
+    width:450px;
+    height:420px;
+}
+
+/* reuse look but separate classes to avoid conflicts */
+.end-wing{
+    position:absolute;
+    filter:drop-shadow(0 0 12px #f00);
+}
+
+/* left */
+.end-wing.left1{
+    width:110px;height:160px;
+    background:linear-gradient(135deg, rgba(255,0,0,0.5), rgba(180,0,0,0.2));
+    clip-path: polygon(30% 0%,100% 30%,90% 100%,0% 95%);
+    top:140px;left:-20px;
+}
+.end-wing.left2{
+    width:95px;height:120px;
+    background:linear-gradient(125deg, rgba(255,50,50,0.3), rgba(180,0,0,0.3));
+    clip-path: polygon(40% 5%,100% 25%,85% 100%,10% 90%);
+    top:165px;left:-35px;
+}
+.end-wing.left3{
+    width:80px;height:100px;
+    background:linear-gradient(130deg, rgba(220,0,0,0.35), rgba(255,50,50,0.25));
+    clip-path: polygon(35% 10%,100% 35%,80% 100%,5% 85%);
+    top:180px;left:-50px;
+}
+
+/* right */
+.end-wing.right1{
+    width:100px;height:150px;
+    background:linear-gradient(225deg, rgba(255,0,0,0.35), rgba(180,0,0,0.25));
+    clip-path: polygon(0% 30%,70% 0%,100% 95%,10% 100%);
+    top:140px;right:-20px;
+}
+.end-wing.right2{
+    width:85px;height:130px;
+    background:linear-gradient(235deg, rgba(255,50,50,0.3), rgba(180,0,0,0.3));
+    clip-path: polygon(0% 25%,60% 5%,90% 90%,15% 100%);
+    top:160px;right:-35px;
+}
+.end-wing.right3{
+    width:75px;height:110px;
+    background:linear-gradient(230deg, rgba(220,0,0,0.4), rgba(255,50,50,0.2));
+    clip-path: polygon(0% 35%,65% 10%,95% 85%,20% 100%);
+    top:180px;right:-50px;
+}
+
+/* envelope body */
+#endEnvelope{
+    position:absolute;
+    width:260px;
+    height:180px;
+    left:50%;
+    top:50%;
+    transform:translate(-50%,-50%);
+    background:linear-gradient(135deg,#440000,#880000);
+    border:4px solid #000;
+    box-shadow:0 0 20px rgba(255,0,0,0.5);
+    border-radius:6px;
+}
+
+/* eyes */
+.end-eye{
+    position:absolute;
+    width:40px;
+    height:40px;
+    background: radial-gradient(circle,#fff 20%,#f00 40%,#000 60%);
+    border-radius:50%;
+    top:50%;
+    transform:translateY(-50%);
+    box-shadow:0 0 15px #f00;
+}
+.end-eye.left{ left:45px; }
+.end-eye.right{ right:45px; }
+
+/* mouth */
+#endMouth{
+    position:absolute;
+    width:90px;
+    height:25px;
+    top:66%;
+    left:50%;
+    transform:translate(-50%,-50%);
+    overflow:hidden;
+}
+#endTeeth{
+    position:absolute;
+    bottom:0;
+    width:100%;
+    height:16px;
+    background:linear-gradient(to right,
+        transparent 0%,transparent 8%,#fff 8%,#fff 17%,
+        transparent 17%,transparent 25%,#fff 25%,#fff 34%,
+        transparent 34%,transparent 42%,#fff 42%,#fff 51%,
+        transparent 51%,transparent 59%,#fff 59%,#fff 68%,
+        transparent 68%,transparent 76%,#fff 76%,#fff 85%,
+        transparent 85%,transparent 100%);
+}
+
+/* break-apart animation */
+@keyframes floatLeft {
+    0%   { transform: translate(0,0) rotate(0deg); opacity:1;}
+    50%  { transform: translate(-80px,-40px) rotate(-10deg); opacity:0.9;}
+    100% { transform: translate(-150px,60px) rotate(-25deg); opacity:0;}
+}
+@keyframes floatRight {
+    0%   { transform: translate(0,0) rotate(0deg); opacity:1;}
+    50%  { transform: translate(80px,-40px) rotate(10deg); opacity:0.9;}
+    100% { transform: translate(150px,60px) rotate(25deg); opacity:0;}
+}
+@keyframes floatUp {
+    0%   { transform: translate(-50%,-50%) scale(1); opacity:1;}
+    50%  { transform: translate(-50%,-80%) scale(1.05); opacity:0.9;}
+    100% { transform: translate(-50%,-130%) scale(0.8); opacity:0;}
+}
+
+.break-apart .end-wing.left1    { animation: floatLeft 6s ease-out forwards; }
+.break-apart .end-wing.left2    { animation: floatLeft 7s ease-out forwards; }
+.break-apart .end-wing.left3    { animation: floatLeft 8s ease-out forwards; }
+.break-apart .end-wing.right1   { animation: floatRight 6s ease-out forwards; }
+.break-apart .end-wing.right2   { animation: floatRight 7s ease-out forwards; }
+.break-apart .end-wing.right3   { animation: floatRight 8s ease-out forwards; }
+.break-apart #endEnvelope       { animation: floatUp 7s ease-out forwards; }
+
+/* ========= DIALOGUE BOX (matches previous style) ========= */
+.dialogue-box {
+    width: 900px;
+    min-height: 90px;
+    background: #2a2a2a;
+    border: 2px solid white;
+    border-radius: 25px;
+    position: absolute;
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 15px 20px;
+    box-sizing: border-box;
+    color: white;
+    font-size: 16px;
+    display: flex;
+    flex-direction: column;
+    cursor: pointer;
+    z-index: 15;
+}
+
+.speaker-name {
+    font-weight: bold;
+    text-decoration: underline;
+    margin-bottom: 5px;
+}
+
+.dialogue-text {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+    white-space: pre-wrap;
+    padding-right: 80px;
+}
+
+.typing::after {
+    content: '|';
+    animation: blink 0.7s infinite;
+    margin-left: 2px;
+}
+
+.click-hint {
+    position: absolute;
+    bottom: 10px;
+    right: 15px;
+    font-size: 14px;
+    color: #ccc;
+    opacity: 0.8;
+    display: none;
+}
+
+@keyframes blink {
+    0%,50%,100% {opacity:1;}
+    25%,75% {opacity:0;}
+}
+</style>
+</head>
+
+<body>
+
+<div class="frame" id="frame">
+<iframe id="bgmFrame" src="bgm.html" style="display:none;"></iframe>
+    <div class="scale-wrapper">
+        <!-- INSTRUCTION -->
+        <div id="instructionScreen">
+            <div class="creature">
+                <div class="wing-left-1"></div>
+                <div class="wing-left-2"></div>
+                <div class="wing-left-3"></div>
+                <div class="wing-right-1"></div>
+                <div class="wing-right-2"></div>
+                <div class="wing-right-3"></div>
+
+                <div id="envelope">
+                    <h2>3M@'s Email Challenge</h2>
+                    <div class="instructions">
+                        6 emails will appear one by one.<br><br>
+                        Drag each email into either:<br>
+                        <b>SAFE</b> or <b>SUSPICIOUS</b> bin.<br><br>
+                        Finish sorting to move on.<br><br>
+                        Good luck.
+                    </div>
+                    <button class="start-btn" onclick="startGame()">Start Game</button>
+                </div>
+
+                <div class="eye eye-left"></div>
+                <div class="eye eye-right"></div>
+            </div>
+        </div>
+
+        <!-- GAME -->
+        <div class="game-screen" id="gameScreen">
+
+            <div class="email" id="emailBox">
+                <div class="gmail-header">
+                    <div class="gmail-icon" id="gmailIcon">B</div>
+                    <div class="gmail-info">
+                        <div class="gmail-name" id="gmailName">Bank Security</div>
+                        <div class="gmail-email" id="gmailAddress">security@bank.com</div>
+                    </div>
+                    <div class="gmail-time" id="gmailTime">2:14 PM</div>
+                </div>
+                <div class="gmail-body">
+                    <div class="gmail-subject" id="emailTitle"></div>
+                    <p id="emailText"></p>
+                </div>
+            </div>
+
+            <div class="bin safe">
+                <img src="safe bin.png" alt="SAFE">
+            </div>
+
+            <div class="bin suspicious">
+                <img src="sus bin.png" alt="SUSPICIOUS">
+            </div>
+
+            <div class="popup" id="popup">
+                <h2 id="popupResult"></h2>
+                <p id="popupExplanation"></p>
+                <button onclick="nextEmail()">Continue</button>
+            </div>
+
+            <!-- AUDIO ELEMENTS -->
+            <audio id="soundCorrect" src="correct-6033.mp3"></audio>
+            <audio id="soundWrong" src="wrong-47985.mp3"></audio>
+            <audio id="warble" src="3M@ talking.mp3"></audio>
+
+        </div>
+
+        <!-- STANDALONE SCORE SCREEN -->
+        <div id="scoreStandalone">
+            <h1>Results</h1>
+            <h2 id="finalScore"></h2>
+            <p id="finalFeedback"></p>
+            <button onclick="scoreContinue()">Continue</button>
+        </div>
+    </div> <!-- end scale-wrapper -->
+
+    <!-- ENDING SCREEN: BREAKING MONSTER + DIALOGUE (NOT SCALED) -->
+    <div id="endingScreen" class="ending-screen">
+        <div id="endingCreature" class="ending-creature">
+            <div class="end-wing left1"></div>
+            <div class="end-wing left2"></div>
+            <div class="end-wing left3"></div>
+            <div class="end-wing right1"></div>
+            <div class="end-wing right2"></div>
+            <div class="end-wing right3"></div>
+
+            <div id="endEnvelope"></div>
+            <div class="end-eye left"></div>
+            <div class="end-eye right"></div>
+            <div id="endMouth">
+                <div id="endTeeth"></div>
+            </div>
+        </div>
+
+        <div class="dialogue-box" id="endingDialogueBox">
+            <span class="speaker-name" id="endingSpeaker">3M@</span>
+            <span class="dialogue-text typing" id="endingText"></span>
+            <span class="click-hint" id="endingClickHint">Click to continue →</span>
+        </div>
+    </div>
+
+</div> <!-- frame -->
+
+<script>
+// Helper to safely message the BGM iframe
+  function bgmSend(msg) {
+    const f = document.getElementById("bgmFrame");
+    if (f && f.contentWindow) f.contentWindow.postMessage(msg, "*");
+  }
+
+  // IMPORTANT:
+  // Autoplay rules: BGM can only start after the user interacts at least once.
+  // So we "arm" it here. The first click/tap/keydown will trigger PLAY_BGM.
+  function unlockAndPlayBgmOnce() {
+    bgmSend("PLAY_BGM");
+    document.removeEventListener("pointerdown", unlockAndPlayBgmOnce);
+    document.removeEventListener("keydown", unlockAndPlayBgmOnce);
+  }
+
+  document.addEventListener("pointerdown", unlockAndPlayBgmOnce, { once: true });
+  document.addEventListener("keydown", unlockAndPlayBgmOnce, { once: true });
+
+  // Optional: If you want BGM to ALWAYS try to play when a page loads (after it's already unlocked),
+  // uncomment the next line:
+  // window.addEventListener("load", () => bgmSend("PLAY_BGM"));
+
+// ============== EMAIL DATA ==============
+const emails = [
+    {name:'XXX Bank',email:'xxxbank@gmail.com',icon:'B',time:'2:14 PM',title:'Transaction successful!',text:'Your transaction of $67.15 to LILY TAN was successful.',answer:'safe',explain:'No suspicious links, just a normal notification not demanding any action.'},
+    {name:'LUCKY DRAW',email:'fairpriceLUCKYDRAW@GMAIL.com',icon:'F',time:'4:00 PM',title:'You won a prize of $50,000!',text:'Click here to claim your free gift.',answer:'suspicious',explain:'No context as to what lucky draw, demands an action of clicking on a suspicious link.'},
+    {name:'Ngee Ann Polytechnic', email:'ngeeann@poly.edu.sg', icon:'N', time:'10:30 AM', title:'Timetable updates', text:'Please take note that timetable for APRIL 2026 Semester has been updated. You may check your updated timetable in NPGO!', answer:'safe', explain:'Official email from an educational institution with no suspicious content.'},
+    {name:'PayPal Support', email:'support@paypal.com', icon:'P', time:'11:00 AM', title:'Security Alert', text:'We noticed a login from a new device. Please verify this activity via your official PayPal app.', answer:'safe', explain:'Legitimate security alert from PayPal. No weird symbols in the email.'},
+    {name:'Jackson Epstein', email:'jackyep@gmail.com', icon:'J', time:'3:45 PM', title:'Presentation slides update', text:'Hey, I’ve attached the research you asked for the presentation slides. Let me know if you need anything else.', answer:'safe', explain:'Expected email from a group member. Still be cautious with attachments, but this one looks normal.'},
+    {name:'CDC VOUCHER', email:'cdcvoucherfree067@gmail.com', icon:'C', time:'9:20 AM', title:'You have won a $100 CDC voucher!', text:'Congratulations! Click the link below to claim your voucher now.', answer:'suspicious', explain:'Unsolicited email promising a reward and urging you to click a link – classic phishing pattern.'}
+];
+
+let index = 0;
+let correctCount = 0;
+
+const emailBox = document.getElementById("emailBox");
+const popup = document.getElementById("popup");
+const bins = document.querySelectorAll('.bin');
+const soundCorrect = document.getElementById("soundCorrect");
+const soundWrong   = document.getElementById("soundWrong");
+const warble       = document.getElementById("warble");
+const endingScreen = document.getElementById("endingScreen");
+
+function startGame(){
+    document.getElementById("instructionScreen").classList.add("fadeOut");
+    setTimeout(()=>{
+        document.getElementById("instructionScreen").style.display="none";
+        document.getElementById("gameScreen").style.display="block";
+        loadEmail();
+    },900);
+}
+
+function loadEmail(){
+    const e = emails[index];
+    document.getElementById("gmailName").textContent = e.name;
+    document.getElementById("gmailAddress").textContent = e.email;
+    document.getElementById("gmailIcon").textContent = e.icon;
+    document.getElementById("gmailTime").textContent = e.time;
+    document.getElementById("emailTitle").textContent = e.title;
+    document.getElementById("emailText").textContent = e.text;
+
+    emailBox.style.display = 'block';
+    emailBox.style.position = 'absolute';
+    emailBox.style.zIndex = 90;
+    emailBox.style.left = '50%';
+    emailBox.style.top = '40px';
+    emailBox.style.transform = 'translateX(-50%)';
+    emailBox.style.opacity = '1';
+    emailBox.style.transition = '';
+    emailBox.onselectstart = () => false;
+}
+
+let dragging = false;
+let offsetX = 0, offsetY = 0;
+
+emailBox.addEventListener('mousedown', e => {
+    e.preventDefault();
+    dragging = true;
+    emailBox.style.cursor = 'grabbing';
+    emailBox.style.transition = 'none';
+
+    const rect = emailBox.getBoundingClientRect();
+    const parentRect = emailBox.parentElement.getBoundingClientRect();
+    offsetX = e.clientX - rect.left;
+    offsetY = e.clientY - rect.top;
+
+    emailBox.style.left = rect.left - parentRect.left + 'px';
+    emailBox.style.top = rect.top - parentRect.top + 'px';
+    emailBox.style.transform = 'none';
+
+    document.addEventListener('mousemove', onMouseMove);
+    document.addEventListener('mouseup', onMouseUp);
+});
+
+function onMouseMove(e){
+    if(!dragging) return;
+    const parentRect = emailBox.parentElement.getBoundingClientRect();
+    emailBox.style.left = (e.clientX - parentRect.left - offsetX) + 'px';
+    emailBox.style.top = (e.clientY - parentRect.top - offsetY) + 'px';
+
+    bins.forEach(b => {
+        const rect = b.getBoundingClientRect();
+        if(e.clientX > rect.left && e.clientX < rect.right &&
+           e.clientY > rect.top && e.clientY < rect.bottom){
+            b.classList.add('hover');
+        } else {
+            b.classList.remove('hover');
+        }
+    });
+}
+
+function onMouseUp(e){
+    if(!dragging) return;
+    dragging = false;
+    emailBox.style.cursor = 'grab';
+
+    let dropped = false;
+
+    bins.forEach(b => {
+        const rect = b.getBoundingClientRect();
+        if(e.clientX > rect.left && e.clientX < rect.right &&
+           e.clientY > rect.top && e.clientY < rect.bottom){
+            
+            dropped = true;
+            const parentRect = emailBox.parentElement.getBoundingClientRect();
+            const binCenterX = rect.left + rect.width/2 - parentRect.left - offsetX;
+            const binCenterY = rect.top + rect.height/2 - parentRect.top - offsetY;
+
+            emailBox.style.transition = 'all 0.3s ease';
+            emailBox.style.left = binCenterX + 'px';
+            emailBox.style.top = binCenterY + 'px';
+            emailBox.style.transform = 'scale(0.2)';
+
+            setTimeout(() => {
+                emailBox.style.display = 'none';
+                emailBox.style.transform = 'translateX(-50%) scale(1)';
+                emailBox.style.left = '50%';
+                emailBox.style.top = '40px';
+                emailBox.style.opacity = '1';
+                emailBox.style.position = 'absolute';
+                emailBox.style.zIndex = 90;
+
+                const choice = b.classList.contains('safe') ? 'safe' : 'suspicious';
+                const correct = choice === emails[index].answer;
+                if(correct) correctCount++;
+
+                const popupResult = document.getElementById("popupResult");
+                popupResult.textContent = correct ? "Correct!" : "Wrong!";
+                popupResult.style.color = correct ? "limegreen" : "red";
+
+                document.getElementById("popupExplanation").textContent = emails[index].explain;
+                popup.style.display = 'block';
+                
+                // Play sound (reset currentTime so last one always plays)
+                if(correct){
+                    soundCorrect.currentTime = 0;
+                    soundCorrect.play().catch(()=>{});
+                } else {
+                    soundWrong.currentTime = 0;
+                    soundWrong.play().catch(()=>{});
+                }
+
+            }, 310);
+        }
+        b.classList.remove('hover');
+    });
+
+    if(!dropped){
+        emailBox.style.transition = 'all 0.2s ease';
+        emailBox.style.left = '50%';
+        emailBox.style.top = '40px';
+        emailBox.style.transform = 'translateX(-50%)';
+        setTimeout(() => { emailBox.style.transition = ''; }, 200);
+    }
+
+    document.removeEventListener('mousemove', onMouseMove);
+    document.removeEventListener('mouseup', onMouseUp);
+}
+
+function nextEmail(){
+    popup.style.display = 'none';
+    index++;
+    if(index >= emails.length){
+        showScore();
+        return;
+    }
+    loadEmail();
+}
+
+// ============== SCORE SCREEN LOGIC ==============
+function showScore(){
+    const total = emails.length;
+
+    // hide the game completely
+    document.getElementById("emailBox").style.display = "none";
+    document.querySelectorAll(".bin").forEach(b => b.style.display="none");
+    popup.style.display = "none";
+
+    // compute score text
+    const scoreText = `You scored ${correctCount} / ${total}`;
+    let feedback="";
+    if(correctCount <= 2){
+        feedback = "You might need a refresher on spotting scams. Stay vigilant!";
+    } else if(correctCount <= 4){
+        feedback = "Not bad! You're catching some red flags, but a few still slipped through.";
+    } else {
+        feedback = "Excellent! You're a scam-spotting pro. 3M@ never stood a chance.";
+    }
+
+    document.getElementById("finalScore").textContent = scoreText;
+    document.getElementById("finalFeedback").textContent = feedback;
+
+    document.getElementById("scoreStandalone").style.display = "flex";
+}
+
+function scoreContinue(){
+    document.getElementById("scoreStandalone").style.display = "none";
+
+    const gameScreen = document.getElementById("gameScreen");
+    gameScreen.style.display = "none";
+
+    endingScreen.style.display = "block";
+    endingScreen.classList.add("fadeInSlow");
+
+    startEndingSequence();
+}
+
+// ============== ENDING DIALOGUE + BREAK APART ==============
+const endingCreature = document.getElementById("endingCreature");
+const endingTextEl = document.getElementById("endingText");
+const endingSpeakerEl = document.getElementById("endingSpeaker");
+const endingClickHint = document.getElementById("endingClickHint");
+const endingDialogueBox = document.getElementById("endingDialogueBox");
+
+const endLines = [
+    { speaker: "3M@", text: "Nooooo… my beautiful scam empire… broken into pieces!" },
+    { speaker: "3M@", text: "Fine, you win this time. Maybe humans aren’t so easy to fool after all..." },
+    { speaker: "3M@", text: "Remember what you learned here, or my cousins will be waiting in your inbox." }
+];
+
+let endLineIndex = 0;
+let endCharIndex = 0;
+let endTyping = false;
+let endInterval = null;
+
+function showEndClickHint(){ endingClickHint.style.display="block"; }
+function hideEndClickHint(){ endingClickHint.style.display="none"; }
+
+function startEndingSequence(){
+    // start break-apart animation (slow float)
+    endingCreature.classList.add("break-apart");
+    // start dialogue
+    typeEndingLine();
+}
+
+function typeEndingLine(){
+    const line = endLines[endLineIndex];
+    endingSpeakerEl.textContent = line.speaker;
+    endingTextEl.textContent = "";
+    hideEndClickHint();
+
+    endCharIndex = 0;
+    endTyping = true;
+    endingTextEl.classList.add("typing");
+
+    clearInterval(endInterval);
+    endInterval = setInterval(()=>{
+        if(endCharIndex < line.text.length){
+            endingTextEl.textContent += line.text.charAt(endCharIndex);
+            endCharIndex++;
+
+            if(line.speaker === "3M@" && endCharIndex === 1){
+                warble.currentTime = 0;
+                warble.loop = true;
+                warble.play().catch(()=>{});
+            }
+        } else {
+            clearInterval(endInterval);
+            endTyping = false;
+            endingTextEl.classList.remove("typing");
+            warble.pause();
+            warble.currentTime = 0;
+            showEndClickHint();
+        }
+    }, 30);
+}
+
+endingDialogueBox.addEventListener("click", () => {
+    const line = endLines[endLineIndex];
+
+    if(endTyping){
+        clearInterval(endInterval);
+        endingTextEl.textContent = line.text;
+        endingTextEl.classList.remove("typing");
+        endTyping = false;
+        warble.pause();
+        warble.currentTime = 0;
+        showEndClickHint();
+        return;
+    }
+
+    // advance
+    if(endLineIndex < endLines.length - 1){
+        endLineIndex++;
+        typeEndingLine();
+    } else {
+        hideEndClickHint();
+        // After last line: fade out monster & go to next page
+        endingScreen.classList.add("fadeOut");
+        setTimeout(()=>{
+            window.location.href = "mirrorminion.html";
+        }, 1000);
+    }
+});
+</script>
+
+</body>
+</html>
