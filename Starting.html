@@ -1,0 +1,1065 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>ROOM 404</title>
+<style>
+  /* ================== GLOBAL ================== */
+  body {
+    margin: 0;
+    background: #000;
+    overflow: hidden;
+    font-family: Arial, Helvetica, sans-serif;
+    color: white;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .frame {
+    width: 960px;
+    height: 540px;
+    border: 2px solid white;
+    position: relative;
+    overflow: hidden;
+    box-sizing: border-box;
+    background: #000;
+  }
+
+  /* =========================
+     OPENING EYES INTRO
+  ========================== */
+  #eyeIntro{
+    position:absolute;
+    inset:0;
+    z-index:2000;
+    pointer-events:none;
+    background:#000;
+    overflow:hidden;
+  }
+  .lid{
+    position:absolute;
+    left:0;
+    width:100%;
+    height:50%;
+    background:#000;
+  }
+  .lid.top{ top:0; }
+  .lid.bottom{ bottom:0; }
+
+  #eyeIntro::after{
+    content:"";
+    position:absolute;
+    inset:-40px;
+    background: radial-gradient(circle at 50% 50%,
+      rgba(0,0,0,0) 0%,
+      rgba(0,0,0,0.35) 45%,
+      rgba(0,0,0,0.95) 78%,
+      rgba(0,0,0,1) 100%);
+    opacity:0.95;
+  }
+
+  @keyframes openEyesTop{
+    0%{ transform:translateY(0); }
+    65%{ transform:translateY(-44%); }
+    100%{ transform:translateY(-55%); }
+  }
+  @keyframes openEyesBottom{
+    0%{ transform:translateY(0); }
+    65%{ transform:translateY(44%); }
+    100%{ transform:translateY(55%); }
+  }
+  .eye-open .lid.top{ animation: openEyesTop 1.15s ease-out forwards; }
+  .eye-open .lid.bottom{ animation: openEyesBottom 1.15s ease-out forwards; }
+
+  /* =========================
+     METAL SLIDING DOOR (OPENS FROM MIDDLE)
+  ========================== */
+  #doorWrap{
+    width:220px;
+    height:320px;
+    position:absolute;
+    top:50%;
+    left:50%;
+    transform:translate(-50%, -50%);
+    z-index:999;
+    opacity:0.6;
+    cursor:not-allowed;
+    user-select:none;
+  }
+  #doorWrap.active{
+    opacity:1;
+    cursor:pointer;
+  }
+
+  #doorWrap::before{
+    content:"";
+    position:absolute;
+    inset:-6px;
+    border:3px solid rgba(255,255,255,0.28);
+    border-radius:10px;
+    box-shadow: 0 18px 40px rgba(0,0,0,0.55), inset 0 0 22px rgba(255,255,255,0.06);
+    pointer-events:none;
+  }
+
+  .doorHalf{
+    position:absolute;
+    top:0;
+    width:50%;
+    height:100%;
+    box-sizing:border-box;
+    border-radius:10px;
+    overflow:hidden;
+    background:
+      linear-gradient(180deg, rgba(255,255,255,0.25), rgba(255,255,255,0.05) 20%, rgba(0,0,0,0.25)),
+      linear-gradient(90deg, rgba(255,255,255,0.10), rgba(255,255,255,0.0) 35%, rgba(0,0,0,0.30) 70%),
+      repeating-linear-gradient(90deg, rgba(255,255,255,0.10) 0 2px, rgba(255,255,255,0.03) 2px 10px),
+      linear-gradient(135deg, #646a72, #2a2f36 55%, #0e1014);
+    border:2px solid rgba(255,255,255,0.22);
+    box-shadow: inset 0 0 22px rgba(0,0,0,0.55);
+  }
+  .doorHalf.left{
+    left:0;
+    border-top-right-radius:0;
+    border-bottom-right-radius:0;
+  }
+  .doorHalf.right{
+    right:0;
+    border-top-left-radius:0;
+    border-bottom-left-radius:0;
+  }
+
+  .doorSeamGlow{
+    position:absolute;
+    top:0;
+    left:50%;
+    width:6px;
+    height:100%;
+    transform:translateX(-50%);
+    background: linear-gradient(180deg, rgba(255,255,255,0.05), rgba(160,220,255,0.28), rgba(255,255,255,0.05));
+    filter: drop-shadow(0 0 10px rgba(120,200,255,0.35));
+    opacity:0.7;
+    pointer-events:none;
+  }
+
+  .vent{
+    position:absolute;
+    left:14px;
+    right:14px;
+    height:46px;
+    border-radius:10px;
+    background: rgba(0,0,0,0.22);
+    border:1px solid rgba(255,255,255,0.10);
+    box-shadow: inset 0 0 14px rgba(0,0,0,0.6);
+    top:26px;
+  }
+  .vent::before{
+    content:"";
+    position:absolute;
+    inset:10px 12px;
+    background: repeating-linear-gradient(180deg,
+      rgba(255,255,255,0.10) 0 2px,
+      rgba(255,255,255,0.02) 2px 7px);
+    border-radius:8px;
+    opacity:0.9;
+  }
+  .bolt{
+    position:absolute;
+    width:8px; height:8px;
+    border-radius:50%;
+    background: radial-gradient(circle at 30% 30%, #ffffff, #b7bec7 45%, #2a2f36 80%);
+    box-shadow:0 0 8px rgba(255,255,255,0.12);
+    opacity:0.95;
+  }
+  .bolt.b1{ top:14px; left:14px; }
+  .bolt.b2{ top:14px; right:14px; }
+  .bolt.b3{ bottom:14px; left:14px; }
+  .bolt.b4{ bottom:14px; right:14px; }
+
+  .handle{
+    position:absolute;
+    top:50%;
+    width:14px;
+    height:68px;
+    transform:translateY(-50%);
+    border-radius:999px;
+    background: linear-gradient(180deg, rgba(255,255,255,0.55), rgba(255,255,255,0.10));
+    border:1px solid rgba(255,255,255,0.22);
+    box-shadow: inset 0 0 10px rgba(0,0,0,0.45);
+    opacity:0.9;
+  }
+  .doorHalf.left .handle{ right:12px; }
+  .doorHalf.right .handle{ left:12px; }
+
+  #doorWrap.opening .doorHalf.left{
+    animation: slideLeft 900ms cubic-bezier(.2,.9,.2,1) forwards;
+  }
+  #doorWrap.opening .doorHalf.right{
+    animation: slideRight 900ms cubic-bezier(.2,.9,.2,1) forwards;
+  }
+  @keyframes slideLeft{
+    0%{ transform:translateX(0); }
+    100%{ transform:translateX(-110%); }
+  }
+  @keyframes slideRight{
+    0%{ transform:translateX(0); }
+    100%{ transform:translateX(110%); }
+  }
+
+  /* ================== SCREEN SHAKE (FROM YOUR CREATURE FILE) ================== */
+  .shake {
+    animation: screenShake 0.6s ease-in-out;
+  }
+  @keyframes screenShake {
+    0%   { transform: translate(0,0); }
+    10%  { transform: translate(-5px, 4px); }
+    20%  { transform: translate(6px, -3px); }
+    30%  { transform: translate(-4px, 5px); }
+    40%  { transform: translate(4px, -4px); }
+    50%  { transform: translate(-6px, 2px); }
+    60%  { transform: translate(5px, -2px); }
+    70%  { transform: translate(-3px, 3px); }
+    80%  { transform: translate(2px, -1px); }
+    90%  { transform: translate(-2px, 1px); }
+    100% { transform: translate(0,0); }
+  }
+
+  /* ================== DIALOGUE BOX ================== */
+  .dialogue-box {
+    width: 900px;
+    min-height: 90px;
+    background: rgba(255,255,255,0.1);
+    border: 2px solid white;
+    border-radius: 25px;
+    position: absolute;
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 15px 20px;
+    box-sizing: border-box;
+    color: white;
+    font-size: 16px;
+    display: flex;
+    flex-direction: column;
+    cursor: pointer;
+    z-index: 20;
+    transition: opacity 0.5s ease;
+  }
+
+  .speaker-name {
+    font-weight: bold;
+    text-decoration: underline;
+    margin-bottom: 5px;
+  }
+
+  .dialogue-text {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+    white-space: pre-wrap;
+    padding-right: 80px;
+  }
+
+  .typing::after {
+    content: '|';
+    animation: blink 0.7s infinite;
+    margin-left: 2px;
+  }
+
+  .click-hint {
+    position: absolute;
+    bottom: 10px;
+    right: 15px;
+    font-size: 14px;
+    color: #ccc;
+    opacity: 0.8;
+    display: none;
+  }
+
+  @keyframes blink {
+    0%,50%,100% {opacity:1;}
+    25%,75% {opacity:0;}
+  }
+
+  /* ================== OVERLAY + PORTAL VIDEO ================== */
+  #overlay{
+    position:absolute;
+    inset:0;
+    background:black;
+    opacity:0;
+    transition: opacity 0.5s ease;
+    z-index:3;
+  }
+
+  #centerVideo{
+    position:absolute;
+    top:0;
+    left:0;
+    width:100%;
+    height:100%;
+    object-fit: cover;
+    opacity: 0;
+    transition: opacity 1s ease;
+    z-index:4;
+    pointer-events: none;
+  }
+
+  /* ================== OPTIONS + BUTTON ================== */
+  .option-boxes {
+    position: absolute;
+    bottom: 110px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 900px;
+    display: flex;
+    justify-content: space-between;
+    z-index: 30;
+  }
+  .option {
+    width: 28%;
+    background: rgba(255,255,255,0.1);
+    border: 2px solid white;
+    border-radius: 15px;
+    padding: 10px;
+    text-align: center;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  .option:hover { background: rgba(255,255,255,0.3); }
+
+  #enterPortalBtn {
+    display: none;
+    position: absolute;
+    bottom: 50px;
+    left: 50%;
+    transform: translateX(-50%) scale(0.8);
+    padding: 15px 30px;
+    font-size: 18px;
+    background: white;
+    color: black;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    z-index: 40;
+    opacity: 0;
+    transition: opacity 1s ease, transform 1s ease;
+  }
+  #enterPortalBtn:hover { background: #ccc; }
+
+  /* ================== FINAL BOSS – PUPPETMASTER67 (INSERTED) ================== */
+  #boss-container {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 640px;
+    height: 480px;
+    transform: translate(-50%, -50%) scale(0.4);
+    opacity: 0;
+    z-index: 10;
+    transition: transform 0.8s ease, opacity 0.8s ease;
+    pointer-events: none;
+  }
+
+  #boss-container.show {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.1);
+  }
+
+  #boss-core {
+    position:absolute;
+    top:50%;
+    left:50%;
+    width:420px;
+    height:420px;
+    transform:translate(-50%,-50%);
+    animation: bossPulse 2.4s ease-in-out infinite;
+  }
+  @keyframes bossPulse {
+    0%,100% { transform:translate(-50%,-50%) scale(1); }
+    50%     { transform:translate(-50%,-50%) scale(1.03); }
+  }
+
+  .string {
+    position:absolute;
+    width:3px;
+    background:linear-gradient(to bottom, #aaa, #666);
+    top:-40px;
+    box-shadow:0 0 10px rgba(255,255,255,0.4);
+  }
+  .string.s1 { left:22%; height:160px; }
+  .string.s2 { left:50%; height:190px; }
+  .string.s3 { right:22%; height:170px; }
+
+  #crossbar {
+    position:absolute;
+    top:-50px;
+    left:50%;
+    width:260px;
+    height:10px;
+    transform:translateX(-50%);
+    background:linear-gradient(to right,#222,#777,#222);
+    box-shadow:0 0 20px rgba(255,255,255,0.2);
+  }
+
+  #boss-body {
+    position:absolute;
+    width:260px;
+    height:280px;
+    left:50%;
+    top:52%;
+    transform:translate(-50%,-50%);
+    background:radial-gradient(circle at 30% 20%, #550000, #05010a 70%, #000000 100%);
+    border-radius:45% 45% 40% 40%;
+    box-shadow:0 0 40px rgba(255,0,80,0.75);
+    border:3px solid #200010;
+  }
+
+  #boss-head {
+    position:absolute;
+    width:220px;
+    height:190px;
+    left:50%;
+    top:20%;
+    transform:translate(-50%,0);
+    background:radial-gradient(circle at 20% 10%, #ffccd5, #550010 60%, #100006 100%);
+    border-radius:45% 45% 40% 40%;
+    box-shadow:0 0 35px rgba(255,50,130,0.9);
+    border:3px solid #2a0010;
+  }
+
+  .face-crack {
+    position:absolute;
+    width:3px;
+    height:90px;
+    background:linear-gradient(to bottom,rgba(255,150,200,0.9),rgba(255,20,100,0.1));
+    box-shadow:0 0 14px rgba(255,120,180,0.9);
+  }
+  .face-crack.c1 { left:40%; top:10%; transform:rotate(8deg); }
+  .face-crack.c2 { right:30%; top:18%; transform:rotate(-10deg); height:70px; }
+
+  .boss-eye {
+    position:absolute;
+    width:58px;
+    height:58px;
+    background: radial-gradient(circle,#ffffff 10%,#ff4444 40%,#3a0000 70%);
+    border-radius:50%;
+    top:37%;
+    transform:translateY(-50%);
+    box-shadow:0 0 20px #ff0044;
+    overflow:hidden;
+  }
+  .boss-eye.left  { left:18%; }
+  .boss-eye.right { right:18%; }
+
+  .boss-eye .pupil {
+    position:absolute;
+    width:18px;
+    height:18px;
+    background:#000;
+    border-radius:50%;
+    top:50%;
+    left:50%;
+    transform:translate(-50%,-50%);
+    animation: bossBlink 4s infinite;
+  }
+  @keyframes bossBlink {
+    0%,10%,90%,100% { transform:translate(-50%,-50%) scaleY(1); }
+    45%,55%         { transform:translate(-50%,-50%) scaleY(0.1); }
+  }
+
+  .eye-ring {
+    position:absolute;
+    inset:4px;
+    border-radius:50%;
+    border:2px solid rgba(255,255,255,0.3);
+    box-shadow:0 0 12px rgba(255,200,220,0.7);
+  }
+
+  #boss-mouth {
+    position:absolute;
+    width:150px;
+    height:46px;
+    top:70%;
+    left:50%;
+    transform:translate(-50%,-50%);
+    overflow:hidden;
+    border-radius:20px;
+    background:#000005;
+    box-shadow:0 0 20px rgba(255,0,80,0.8);
+  }
+  #boss-teeth-top, #boss-teeth-bottom {
+    position:absolute;
+    width:100%;
+    height:26px;
+    background:
+      linear-gradient(to right,
+        transparent 0%,transparent 7%,#fff 7%,#fff 14%,
+        transparent 14%,transparent 21%,#fff 21%,#fff 28%,
+        transparent 28%,transparent 35%,#fff 35%,#fff 42%,
+        transparent 42%,transparent 49%,#fff 49%,#fff 56%,
+        transparent 56%,transparent 63%,#fff 63%,#fff 70%,
+        transparent 70%,transparent 77%,#fff 77%,#fff 84%,
+        transparent 84%,transparent 100%);
+  }
+  #boss-teeth-top { top:0; transform-origin:bottom center; }
+  #boss-teeth-bottom { bottom:0; transform-origin:top center; }
+  .talking #boss-teeth-top { animation: chompTop 0.33s ease-in-out infinite; }
+  .talking #boss-teeth-bottom { animation: chompBottom 0.33s ease-in-out infinite; }
+  @keyframes chompTop {
+    0%,100% { transform:translateY(0); }
+    50%     { transform:translateY(-6px); }
+  }
+  @keyframes chompBottom {
+    0%,100% { transform:translateY(0); }
+    50%     { transform:translateY(6px); }
+  }
+
+  .arm {
+    position:absolute;
+    width:80px;
+    height:140px;
+    background:linear-gradient(to bottom,#330015,#770022);
+    border-radius:50px;
+    box-shadow:0 0 18px rgba(255,0,80,0.7);
+    transform-origin:top center;
+  }
+  .arm.left {
+    left:10%;
+    top:38%;
+    transform:rotate(18deg);
+    animation: armSwingLeft 2.4s ease-in-out infinite;
+  }
+  .arm.right {
+    right:10%;
+    top:38%;
+    transform:rotate(-18deg);
+    animation: armSwingRight 2.4s ease-in-out infinite;
+  }
+  @keyframes armSwingLeft {
+    0%,100% { transform:rotate(16deg); }
+    50%     { transform:rotate(24deg); }
+  }
+  @keyframes armSwingRight {
+    0%,100% { transform:rotate(-16deg); }
+    50%     { transform:rotate(-24deg); }
+  }
+
+  #chest-core {
+    position:absolute;
+    width:120px;
+    height:120px;
+    left:50%;
+    top:52%;
+    transform:translate(-50%,-50%);
+    background:radial-gradient(circle,#ff3b6a,#3a0010 70%);
+    border-radius:50%;
+    box-shadow:0 0 30px rgba(255,0,90,0.9);
+  }
+
+  .circuit {
+    position:absolute;
+    height:3px;
+    background:linear-gradient(to right,#ffb3d1,#ff2a7a);
+    box-shadow:0 0 10px rgba(255,120,190,0.9);
+  }
+  .circuit.c1 { width:90px; top:54%; left:16%; }
+  .circuit.c2 { width:100px; top:60%; right:12%; }
+  .circuit.c3 { width:140px; top:68%; left:18%; } /* FIXED: missing dot in your pasted code */
+
+  .boss-label {
+    position:absolute;
+    bottom:-34px;
+    left:50%;
+    transform:translateX(-50%);
+    font-family:monospace;
+    font-size:13px;
+    letter-spacing:2px;
+    color:#ff638f;
+    text-shadow:0 0 10px #ff2a7a;
+    animation: labelBlink 1.2s infinite;
+  }
+  @keyframes labelBlink {
+    0%,100% { opacity:1; }
+    50%     { opacity:0.4; }
+  }
+</style>
+</head>
+
+<body>
+<div class="frame">
+<iframe id="bgmFrame" src="bgm.html" style="display:none;"></iframe>
+  <!-- Eye intro overlay -->
+  <div id="eyeIntro">
+    <div class="lid top"></div>
+    <div class="lid bottom"></div>
+  </div>
+
+  <!-- Metal sliding door -->
+  <div id="doorWrap" aria-label="Door" role="button">
+    <div class="doorHalf left">
+      <div class="bolt b1"></div><div class="bolt b2"></div><div class="bolt b3"></div><div class="bolt b4"></div>
+      <div class="vent"></div>
+      <div class="handle"></div>
+    </div>
+    <div class="doorHalf right">
+      <div class="bolt b1"></div><div class="bolt b2"></div><div class="bolt b3"></div><div class="bolt b4"></div>
+      <div class="vent"></div>
+      <div class="handle"></div>
+    </div>
+    <div class="doorSeamGlow"></div>
+  </div>
+
+  <div id="overlay"></div>
+
+  <!-- ✅ INSERTED CREATURE -->
+  <div id="boss-container">
+    <div id="boss-core">
+      <div id="crossbar"></div>
+      <div class="string s1"></div>
+      <div class="string s2"></div>
+      <div class="string s3"></div>
+
+      <div id="boss-body">
+        <div id="chest-core"></div>
+        <div class="circuit c1"></div>
+        <div class="circuit c2"></div>
+        <div class="circuit c3"></div>
+      </div>
+
+      <div id="boss-head">
+        <div class="face-crack c1"></div>
+        <div class="face-crack c2"></div>
+
+        <div class="boss-eye left">
+          <div class="eye-ring"></div>
+          <div class="pupil"></div>
+        </div>
+        <div class="boss-eye right">
+          <div class="eye-ring"></div>
+          <div class="pupil"></div>
+        </div>
+
+        <div id="boss-mouth">
+          <div id="boss-teeth-top"></div>
+          <div id="boss-teeth-bottom"></div>
+        </div>
+      </div>
+
+      <div class="arm left"></div>
+      <div class="arm right"></div>
+
+      <div class="boss-label">PUPPETMASTER67</div>
+    </div>
+  </div>
+
+  <video id="centerVideo" src="portal effect ixd FINAL.mp4" preload="auto"></video>
+
+  <!-- DIALOGUE -->
+  <div class="dialogue-box" id="dialogue">
+    <span class="speaker-name" id="speaker">You</span>
+    <span class="dialogue-text typing" id="dialogueText"></span>
+    <span class="click-hint" id="clickHint">Click to continue →</span>
+  </div>
+
+  <div class="option-boxes" id="options" style="display:none;">
+    <div class="option" data-reply="Bold… I like your spirit. Let's see if your courage lasts.">Challenge accepted!</div>
+    <div class="option" data-reply="Such confidence… I'll enjoy breaking it.">You're going down!</div>
+    <div class="option" data-reply="Confused already? Good. You'll fit perfectly in ROOM 404.">What!</div>
+  </div>
+
+  <button id="enterPortalBtn">Enter The Portal?</button>
+
+  <!-- AUDIO -->
+  <audio id="warble" src="puppetmaster talking.mp3" preload="auto"></audio>
+  <audio id="thud"   src="massive-thump-116359.mp3" preload="auto"></audio>
+  <audio id="youTalk" src="computer-keyboard-typing-290582.mp3" preload="auto"></audio>
+</div>
+
+<script>
+// Helper to safely message the BGM iframe
+  function bgmSend(msg) {
+    const f = document.getElementById("bgmFrame");
+    if (f && f.contentWindow) f.contentWindow.postMessage(msg, "*");
+  }
+
+  // IMPORTANT:
+  // Autoplay rules: BGM can only start after the user interacts at least once.
+  // So we "arm" it here. The first click/tap/keydown will trigger PLAY_BGM.
+  function unlockAndPlayBgmOnce() {
+    bgmSend("PLAY_BGM");
+    document.removeEventListener("pointerdown", unlockAndPlayBgmOnce);
+    document.removeEventListener("keydown", unlockAndPlayBgmOnce);
+  }
+
+  document.addEventListener("pointerdown", unlockAndPlayBgmOnce, { once: true });
+  document.addEventListener("keydown", unlockAndPlayBgmOnce, { once: true });
+
+  // Optional: If you want BGM to ALWAYS try to play when a page loads (after it's already unlocked),
+  // uncomment the next line:
+  // window.addEventListener("load", () => bgmSend("PLAY_BGM"));
+/* =========================
+   LINES
+========================= */
+const initialLines = [
+  { speaker:"You", text:"W-what, where am I?" },
+  { speaker:"You", text:"Hm? A door... could this be the way out?" },
+  { speaker:"You", text:"Let me try to open it..." }
+];
+
+const newLines = [
+  { speaker:"PuppetMaster67", text:"Welcome to ROOM 404" },
+  { speaker:"PuppetMaster67", text:"I am PuppetMaster67." },
+  { speaker:"PuppetMaster67", text:"You are now trapped in my domain expansion." },
+  { speaker:"PuppetMaster67", text:"To escape, you must use your knowledge of Online Harms to defeat my minions." },
+  { speaker:"PuppetMaster67", text:"Do so and you escape with your life..." },
+  { speaker:"PuppetMaster67", text:"fail and you remain trapped forever... MUAHAHAHAHAHA!" }
+];
+
+/* =========================
+   DOM
+========================= */
+const frame        = document.querySelector(".frame");
+const eyeIntro     = document.getElementById("eyeIntro");
+
+const doorWrap     = document.getElementById("doorWrap");
+const overlay      = document.getElementById("overlay");
+
+const dialogueBox  = document.getElementById("dialogue");
+const dialogueText = document.getElementById("dialogueText");
+const speakerEl    = document.getElementById("speaker");
+const clickHint    = document.getElementById("clickHint");
+
+const bossContainer = document.getElementById("boss-container");
+const bossCore      = document.getElementById("boss-core");
+
+const options       = document.getElementById("options");
+const optionElements= document.querySelectorAll(".option");
+
+const centerVideo   = document.getElementById("centerVideo");
+const enterPortalBtn= document.getElementById("enterPortalBtn");
+
+const warble       = document.getElementById("warble");
+const thud         = document.getElementById("thud");
+const youTalk      = document.getElementById("youTalk");
+
+/* =========================
+   STATE
+========================= */
+let activeScript   = initialLines;
+let lineIndex      = 0;
+let charIndex      = 0;
+let typingInterval = null;
+let isTyping       = false;
+let canClick       = false;
+
+let audioUnlocked  = false;
+let bossAppeared   = false;
+let doorOpenedOnce = false;
+
+/* =========================
+   AUDIO UNLOCK
+========================= */
+function unlockAudio(){
+  if(audioUnlocked) return;
+  audioUnlocked = true;
+
+  [warble, thud, youTalk].forEach(a => {
+    if(!a) return;
+    a.volume = 1;
+    a.play().then(()=>{
+      a.pause();
+      a.currentTime = 0;
+    }).catch(()=>{});
+  });
+}
+document.addEventListener("pointerdown", unlockAudio, { once:true });
+document.addEventListener("keydown", unlockAudio, { once:true });
+
+/* =========================
+   HINT
+========================= */
+function showClickHint(){ clickHint.style.display = "block"; }
+function hideClickHint(){ clickHint.style.display = "none"; }
+
+/* =========================
+   VOICE HANDLERS
+========================= */
+function startPuppetVoice(){
+  if(!audioUnlocked || !warble) return;
+  warble.loop = true;
+  warble.currentTime = 0;
+  warble.play().catch(()=>{});
+  bossCore.classList.add("talking");
+}
+function stopPuppetVoice(){
+  if(warble){
+    warble.pause();
+    warble.currentTime = 0;
+  }
+  bossCore.classList.remove("talking");
+}
+
+function startUserVoice(){
+  if(!audioUnlocked || !youTalk) return;
+  youTalk.loop = true;
+  youTalk.currentTime = 0;
+  youTalk.play().catch(()=>{});
+}
+function stopUserVoice(){
+  if(youTalk){
+    youTalk.pause();
+    youTalk.currentTime = 0;
+  }
+}
+
+/* =========================
+   TYPEWRITER
+========================= */
+function typeLine(){
+  const line = activeScript[lineIndex];
+
+  clearInterval(typingInterval);
+  hideClickHint();
+
+  dialogueText.innerHTML = "";
+  speakerEl.textContent = line.speaker;
+
+  charIndex = 0;
+  isTyping  = true;
+  canClick  = false;
+  dialogueText.classList.add("typing");
+
+  // stop anything lingering
+  stopPuppetVoice();
+  stopUserVoice();
+
+  // start correct voice for this line
+  if(line.speaker === "PuppetMaster67") startPuppetVoice();
+  if(line.speaker === "You") startUserVoice();
+
+  typingInterval = setInterval(()=>{
+    if(charIndex < line.text.length){
+      dialogueText.innerHTML += line.text.charAt(charIndex);
+      charIndex++;
+    } else {
+      clearInterval(typingInterval);
+      isTyping = false;
+      dialogueText.classList.remove("typing");
+
+      // ✅ STOP audio when line finishes
+      stopPuppetVoice();
+      stopUserVoice();
+
+      // Special: after finishing last line of a script
+      if(activeScript === initialLines && lineIndex === initialLines.length - 1){
+        doorWrap.classList.add("active");
+        canClick = false;              // door click is the next step
+        // no hint shown here (door is the hint)
+      } else if(activeScript === newLines && lineIndex === newLines.length - 1){
+        options.style.display = "flex";
+        canClick = false;
+      } else {
+        canClick = true;
+        showClickHint();
+      }
+    }
+  }, 30);
+}
+
+function skipToEnd(){
+  const line = activeScript[lineIndex];
+
+  clearInterval(typingInterval);
+  isTyping = false;
+  dialogueText.classList.remove("typing");
+  dialogueText.innerHTML = line.text;
+
+  // ✅ STOP audio when user skips
+  stopPuppetVoice();
+  stopUserVoice();
+
+  if(activeScript === initialLines && lineIndex === initialLines.length - 1){
+    doorWrap.classList.add("active");
+    return;
+  }
+  if(activeScript === newLines && lineIndex === newLines.length - 1){
+    options.style.display = "flex";
+    return;
+  }
+
+  canClick = true;
+  showClickHint();
+}
+
+/* =========================
+   BOSS ENTRANCE: 3 THUMPS (SHAKE ONLY)
+========================= */
+function triggerBossEntranceThenStartNewLines(){
+  canClick = false;
+  hideClickHint();
+
+  // Show this line while the thumps happen
+  speakerEl.textContent = "You";
+  dialogueText.classList.remove("typing");
+  dialogueText.innerHTML = "What is that sound?";
+
+  // stop any voices
+  stopPuppetVoice();
+  stopUserVoice();
+
+  let thumpsDone = 0;
+  const maxThumps = 3;
+
+  function doThump(){
+    if(thumpsDone >= maxThumps){
+      bossContainer.classList.add("show");
+      bossAppeared = true;
+
+      // now start puppet lines
+      activeScript = newLines;
+      lineIndex = 0;
+      typeLine();
+      return;
+    }
+
+    thumpsDone++;
+
+    // Shake the whole frame
+    frame.classList.add("shake");
+
+    // Play thump
+    if(thud && audioUnlocked){
+      thud.currentTime = 0;
+      thud.play().catch(()=>{});
+    }
+
+    setTimeout(()=>{
+      frame.classList.remove("shake");
+      setTimeout(doThump, 250);
+    }, 600);
+  }
+
+  doThump();
+}
+
+/* =========================
+   DIALOGUE CLICK
+========================= */
+dialogueBox.addEventListener("click", () => {
+  if(isTyping){
+    skipToEnd();
+    return;
+  }
+  if(!canClick) return;
+
+  if(lineIndex < activeScript.length - 1){
+    canClick = false;
+    hideClickHint();
+    lineIndex++;
+    typeLine();
+  }
+});
+
+/* =========================
+   DOOR CLICK SEQUENCE
+========================= */
+doorWrap.addEventListener("click", (e) => {
+  if(!doorWrap.classList.contains("active") || doorOpenedOnce) return;
+  e.preventDefault();
+  doorOpenedOnce = true;
+
+  // door opening animation
+  doorWrap.classList.add("opening");
+  doorWrap.classList.remove("active");
+
+  setTimeout(() => {
+    doorWrap.style.display = "none";
+
+    // flash overlay like your old sequence
+    overlay.style.opacity = 1;
+
+    setTimeout(()=>{
+      overlay.style.opacity = 0;
+
+      // after door: do the 3 thumps + boss reveal, then newLines
+      triggerBossEntranceThenStartNewLines();
+    }, 500);
+
+  }, 900);
+});
+
+/* =========================
+   OPTIONS -> PORTAL
+========================= */
+optionElements.forEach(opt => {
+  opt.addEventListener("click", () => {
+    const chosenText = opt.textContent;
+    const puppetReply = opt.getAttribute("data-reply");
+
+    options.style.display = "none";
+
+    // show user's chosen line as a temporary script
+    activeScript = [{ speaker:"You", text: chosenText }];
+    lineIndex = 0;
+    typeLine();
+
+    setTimeout(()=>{
+      // puppet reply
+      activeScript = [{ speaker:"PuppetMaster67", text: puppetReply }];
+      lineIndex = 0;
+      typeLine();
+
+      // after puppet reply finishes, do portal sequence
+      const est = puppetReply.length * 30 + 900;
+      setTimeout(()=>{
+        bossContainer.classList.remove("show");
+        stopPuppetVoice();
+
+        setTimeout(()=>{
+          centerVideo.style.opacity = 1;
+          centerVideo.volume = 1;
+          centerVideo.play();
+
+          setTimeout(()=>{
+            dialogueBox.style.opacity = 0;
+
+            enterPortalBtn.style.display = "block";
+            setTimeout(()=>{
+              enterPortalBtn.style.opacity = 1;
+              enterPortalBtn.style.transform = "translateX(-50%) scale(1)";
+            }, 50);
+          }, 3000);
+
+        }, 450);
+      }, est);
+
+    }, chosenText.length * 30 + 800);
+  });
+});
+
+enterPortalBtn.addEventListener("click", () => {
+  window.location.href = "EmailScam.html";
+});
+
+/* =========================
+   START: EYES OPEN THEN DIALOGUE
+========================= */
+window.addEventListener("load", () => {
+  eyeIntro.classList.add("eye-open");
+
+  setTimeout(() => {
+    eyeIntro.style.transition = "opacity 450ms ease";
+    eyeIntro.style.opacity = "0";
+    setTimeout(() => {
+      eyeIntro.remove();
+      activeScript = initialLines;
+      lineIndex = 0;
+      typeLine();
+    }, 480);
+  }, 1250);
+});
+</script>
+</body>
+</html>
