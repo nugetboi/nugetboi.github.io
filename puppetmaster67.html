@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PUPPETMASTER67 – Final Boss Intro</title>
+<style>
+/* ================== GLOBAL ================== */
+body {
+    margin: 0;
+    background: #000;
+    overflow: hidden;
+    font-family: Arial, Helvetica, sans-serif;
+    color: white;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.frame {
+    width: 960px;
+    height: 540px;
+    border: 2px solid white;
+    position: relative;
+    overflow: hidden;
+    box-sizing: border-box;
+}
+
+/* Inner wrapper that we actually shake */
+.shake-wrapper {
+    position: relative;
+    width: 100%;
+    height: 100%;
+}
+
+/* ================== BACKGROUND VIDEO ================== */
+.background-video {
+    position:absolute;
+    top:0;
+    left:0;
+    width:100%;
+    height:100%;
+    object-fit: cover;
+    filter: brightness(0.7) contrast(1.1);
+    z-index:0;
+}
+
+/* ================== SCREEN SHAKE ================== */
+.shake {
+    animation: screenShake 0.6s ease-in-out;
+}
+
+@keyframes screenShake {
+    0%   { transform: translate(0,0); }
+    10%  { transform: translate(-5px, 4px); }
+    20%  { transform: translate(6px, -3px); }
+    30%  { transform: translate(-4px, 5px); }
+    40%  { transform: translate(4px, -4px); }
+    50%  { transform: translate(-6px, 2px); }
+    60%  { transform: translate(5px, -2px); }
+    70%  { transform: translate(-3px, 3px); }
+    80%  { transform: translate(2px, -1px); }
+    90%  { transform: translate(-2px, 1px); }
+    100% { transform: translate(0,0); }
+}
+
+/* ================== DIALOGUE BOX ================== */
+.dialogue-box {
+    width: 900px;
+    min-height: 90px;
+    background: #2a2a2a;
+    border: 2px solid white;
+    border-radius: 25px;
+    position: absolute;
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 15px 20px;
+    box-sizing: border-box;
+    color: white;
+    font-size: 16px;
+    display: flex;
+    flex-direction: column;
+    cursor: pointer;
+    z-index: 20;
+}
+
+.speaker-name {
+    font-weight: bold;
+    text-decoration: underline;
+    margin-bottom: 5px;
+}
+
+.dialogue-text {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+    white-space: pre-wrap;
+    padding-right: 80px;
+}
+
+.typing::after {
+    content: '|';
+    animation: blink 0.7s infinite;
+    margin-left: 2px;
+}
+
+.click-hint {
+    position: absolute;
+    bottom: 10px;
+    right: 15px;
+    font-size: 14px;
+    color: #ccc;
+    opacity: 0.8;
+    display: none;
+}
+
+@keyframes blink {
+    0%,50%,100% {opacity:1;}
+    25%,75% {opacity:0;}
+}
+
+/* ================== FINAL BOSS – PUPPETMASTER67 ================== */
+
+#boss-container {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 640px;
+    height: 480px;
+    transform: translate(-50%, -50%) scale(0.4);
+    opacity: 0;
+    z-index: 10;
+    transition: transform 0.8s ease, opacity 0.8s ease;
+}
+
+/* when revealed */
+#boss-container.show {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.1);
+}
+
+/* subtle idle breathing / menace */
+#boss-core {
+    position:absolute;
+    top:50%;
+    left:50%;
+    width:420px;
+    height:420px;
+    transform:translate(-50%,-50%);
+    animation: bossPulse 2.4s ease-in-out infinite;
+}
+@keyframes bossPulse {
+    0%,100% { transform:translate(-50%,-50%) scale(1); }
+    50%     { transform:translate(-50%,-50%) scale(1.03); }
+}
+
+/* puppet strings */
+.string {
+    position:absolute;
+    width:3px;
+    background:linear-gradient(to bottom, #aaa, #666);
+    top:-40px;
+    box-shadow:0 0 10px rgba(255,255,255,0.4);
+}
+.string.s1 { left:22%; height:160px; }
+.string.s2 { left:50%; height:190px; }
+.string.s3 { right:22%; height:170px; }
+
+/* crossbar above */
+#crossbar {
+    position:absolute;
+    top:-50px;
+    left:50%;
+    width:260px;
+    height:10px;
+    transform:translateX(-50%);
+    background:linear-gradient(to right,#222,#777,#222);
+    box-shadow:0 0 20px rgba(255,255,255,0.2);
+}
+
+/* main body – big dark torso */
+#boss-body {
+    position:absolute;
+    width:260px;
+    height:280px;
+    left:50%;
+    top:52%;
+    transform:translate(-50%,-50%);
+    background:radial-gradient(circle at 30% 20%, #550000, #05010a 70%, #000000 100%);
+    border-radius:45% 45% 40% 40%;
+    box-shadow:0 0 40px rgba(255,0,80,0.75);
+    border:3px solid #200010;
+}
+
+/* head – larger than other monsters */
+#boss-head {
+    position:absolute;
+    width:220px;
+    height:190px;
+    left:50%;
+    top:20%;
+    transform:translate(-50%,0);
+    background:radial-gradient(circle at 20% 10%, #ffccd5, #550010 60%, #100006 100%);
+    border-radius:45% 45% 40% 40%;
+    box-shadow:0 0 35px rgba(255,50,130,0.9);
+    border:3px solid #2a0010;
+}
+
+/* glowing cracks on the face */
+.face-crack {
+    position:absolute;
+    width:3px;
+    height:90px;
+    background:linear-gradient(to bottom,rgba(255,150,200,0.9),rgba(255,20,100,0.1));
+    box-shadow:0 0 14px rgba(255,120,180,0.9);
+}
+.face-crack.c1 { left:40%; top:10%; transform:rotate(8deg); }
+.face-crack.c2 { right:30%; top:18%; transform:rotate(-10deg); height:70px; }
+
+/* EYES – bigger, angry */
+.boss-eye {
+    position:absolute;
+    width:58px;
+    height:58px;
+    background: radial-gradient(circle,#ffffff 10%,#ff4444 40%,#3a0000 70%);
+    border-radius:50%;
+    top:37%;
+    transform:translateY(-50%);
+    box-shadow:0 0 20px #ff0044;
+    overflow:hidden;
+}
+.boss-eye.left  { left:18%; }
+.boss-eye.right { right:18%; }
+
+.boss-eye .pupil {
+    position:absolute;
+    width:18px;
+    height:18px;
+    background:#000;
+    border-radius:50%;
+    top:50%;
+    left:50%;
+    transform:translate(-50%,-50%);
+    animation: bossBlink 4s infinite;
+}
+@keyframes bossBlink {
+    0%,10%,90%,100% { transform:translate(-50%,-50%) scaleY(1); }
+    45%,55%         { transform:translate(-50%,-50%) scaleY(0.1); }
+}
+
+/* extra glow ring */
+.eye-ring {
+    position:absolute;
+    inset:4px;
+    border-radius:50%;
+    border:2px solid rgba(255,255,255,0.3);
+    box-shadow:0 0 12px rgba(255,200,220,0.7);
+}
+
+/* Mouth – jagged puppet maw */
+#boss-mouth {
+    position:absolute;
+    width:150px;
+    height:46px;
+    top:70%;
+    left:50%;
+    transform:translate(-50%,-50%);
+    overflow:hidden;
+    border-radius:20px;
+    background:#000005;
+    box-shadow:0 0 20px rgba(255,0,80,0.8);
+}
+#boss-teeth-top, #boss-teeth-bottom {
+    position:absolute;
+    width:100%;
+    height:26px;
+    background:
+    linear-gradient(to right,
+        transparent 0%,transparent 7%,#fff 7%,#fff 14%,
+        transparent 14%,transparent 21%,#fff 21%,#fff 28%,
+        transparent 28%,transparent 35%,#fff 35%,#fff 42%,
+        transparent 42%,transparent 49%,#fff 49%,#fff 56%,
+        transparent 56%,transparent 63%,#fff 63%,#fff 70%,
+        transparent 70%,transparent 77%,#fff 77%,#fff 84%,
+        transparent 84%,transparent 100%);
+}
+#boss-teeth-top {
+    top:0;
+    transform-origin:bottom center;
+}
+#boss-teeth-bottom {
+    bottom:0;
+    transform-origin:top center;
+}
+.talking #boss-teeth-top {
+    animation: chompTop 0.33s ease-in-out infinite;
+}
+.talking #boss-teeth-bottom {
+    animation: chompBottom 0.33s ease-in-out infinite;
+}
+@keyframes chompTop {
+    0%,100% { transform:translateY(0); }
+    50%     { transform:translateY(-6px); }
+}
+@keyframes chompBottom {
+    0%,100% { transform:translateY(0); }
+    50%     { transform:translateY(6px); }
+}
+
+/* dangling puppet arms */
+.arm {
+    position:absolute;
+    width:80px;
+    height:140px;
+    background:linear-gradient(to bottom,#330015,#770022);
+    border-radius:50px;
+    box-shadow:0 0 18px rgba(255,0,80,0.7);
+    transform-origin:top center;
+}
+.arm.left {
+    left:10%;
+    top:38%;
+    transform:rotate(18deg);
+    animation: armSwingLeft 2.4s ease-in-out infinite;
+}
+.arm.right {
+    right:10%;
+    top:38%;
+    transform:rotate(-18deg);
+    animation: armSwingRight 2.4s ease-in-out infinite;
+}
+@keyframes armSwingLeft {
+    0%,100% { transform:rotate(16deg); }
+    50%     { transform:rotate(24deg); }
+}
+@keyframes armSwingRight {
+    0%,100% { transform:rotate(-16deg); }
+    50%     { transform:rotate(-24deg); }
+}
+
+/* chest core */
+#chest-core {
+    position:absolute;
+    width:120px;
+    height:120px;
+    left:50%;
+    top:52%;
+    transform:translate(-50%,-50%);
+    background:radial-gradient(circle,#ff3b6a,#3a0010 70%);
+    border-radius:50%;
+    box-shadow:0 0 30px rgba(255,0,90,0.9);
+}
+
+/* glitchy lines/routes over chest */
+.circuit {
+    position:absolute;
+    height:3px;
+    background:linear-gradient(to right,#ffb3d1,#ff2a7a);
+    box-shadow:0 0 10px rgba(255,120,190,0.9);
+}
+.circuit.c1 { width:90px; top:54%; left:16%; }
+.circuit.c2 { width:100px; top:60%; right:12%; }
+.circuit.c3 { width:140px; top:68%; left:18%; }
+
+/* floating name / indicator */
+.boss-label {
+    position:absolute;
+    bottom:-34px;
+    left:50%;
+    transform:translateX(-50%);
+    font-family:monospace;
+    font-size:13px;
+    letter-spacing:2px;
+    color:#ff638f;
+    text-shadow:0 0 10px #ff2a7a;
+    animation: labelBlink 1.2s infinite;
+}
+@keyframes labelBlink {
+    0%,100% { opacity:1; }
+    50%     { opacity:0.4; }
+}
+</style>
+</head>
+<body>
+
+<div class="frame">
+    <div class="shake-wrapper" id="shakeWrapper">
+
+        <video class="background-video" autoplay muted loop playsinline preload="auto">
+            <source src="walking corridor.mp4" type="video/mp4">
+        </video>
+
+        <!-- DIALOGUE -->
+        <div class="dialogue-box" id="dialogue">
+            <span class="speaker-name" id="speaker">You</span>
+            <span class="dialogue-text typing" id="dialogueText"></span>
+            <span class="click-hint" id="clickHint">Click to continue →</span>
+        </div>
+
+        <!-- FINAL BOSS CONTAINER -->
+        <div id="boss-container">
+            <div id="boss-core">
+                <div id="crossbar"></div>
+                <div class="string s1"></div>
+                <div class="string s2"></div>
+                <div class="string s3"></div>
+
+                <div id="boss-body">
+                    <div id="chest-core"></div>
+                    <div class="circuit c1"></div>
+                    <div class="circuit c2"></div>
+                    <div class="circuit c3"></div>
+                </div>
+
+                <div id="boss-head">
+                    <div class="face-crack c1"></div>
+                    <div class="face-crack c2"></div>
+
+                    <div class="boss-eye left">
+                        <div class="eye-ring"></div>
+                        <div class="pupil"></div>
+                    </div>
+                    <div class="boss-eye right">
+                        <div class="eye-ring"></div>
+                        <div class="pupil"></div>
+                    </div>
+
+                    <div id="boss-mouth">
+                        <div id="boss-teeth-top"></div>
+                        <div id="boss-teeth-bottom"></div>
+                    </div>
+                </div>
+
+                <div class="arm left"></div>
+                <div class="arm right"></div>
+
+                <div class="boss-label">PUPPETMASTER67</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- AUDIO -->
+<audio id="warble" src="puppetmaster talking.mp3"></audio>
+<audio id="thud"   src="massive-thump-116359.mp3"></audio>
+
+<script>
+const shaker       = document.getElementById("shakeWrapper");
+const dialogueBox  = document.getElementById("dialogue");
+const dialogueText = document.getElementById("dialogueText");
+const speakerEl    = document.getElementById("speaker");
+const clickHint    = document.getElementById("clickHint");
+const bossContainer = document.getElementById("boss-container");
+const bossCore      = document.getElementById("boss-core");
+
+const warble = document.getElementById("warble");
+const thud   = document.getElementById("thud");
+
+/* ========= DIALOGUE LINES ========= */
+const lines = [
+    { speaker:"You", text:"sigh I wonder if I'm reaching the end..." },
+    { speaker:"PUPPETMASTER67", text:"Congratulations on making it this far..." },
+    { speaker:"PUPPETMASTER67", text:"Now you face off with ME, the one who trapped you here in the first place." },
+    { speaker:"PUPPETMASTER67", text:"If you want to shut me down, you’ll need to cut through all the tricks I’ve stitched together." },
+    { speaker:"PUPPETMASTER67", text:"No more minions. No more warm-ups. Just you… and the puppetmaster." },
+    { speaker:"PUPPETMASTER67", text:"In the next game, you have to use your W, A, S, D keys to move around the map..." },
+    { speaker:"PUPPETMASTER67", text:"Collect all 3 power-ups and answer questions to beat me..." },
+    { speaker:"PUPPETMASTER67", text:"But be careful, I’ll be sending my own attacks your way!" },
+    { speaker:"PUPPETMASTER67", text:"Dodge and attack, simple as that!" },
+    { speaker:"PUPPETMASTER67", text:"Let’s see if you have what it takes, human." }
+];
+
+let lineIndex      = 0;
+let charIndex      = 0;
+let isTyping       = false;
+let typingInterval = null;
+let canClick       = false;
+let audioUnlocked  = false;
+let bossAppeared   = false;
+
+/* ========= AUDIO UNLOCK ========= */
+function unlockAudio(){
+    if(audioUnlocked) return;
+    audioUnlocked = true;
+
+    [warble, thud].forEach(a => {
+        if(!a) return;
+        a.volume = 1;
+        a.play().then(()=>{
+            a.pause();
+            a.currentTime = 0;
+        }).catch(()=>{});
+    });
+}
+
+document.addEventListener("pointerdown", unlockAudio, { once:true });
+document.addEventListener("keydown", unlockAudio, { once:true });
+
+function showClickHint(){ clickHint.style.display = "block"; }
+function hideClickHint(){ clickHint.style.display = "none"; }
+
+/* ========= VOICE HANDLER ========= */
+function handleVoice(speaker, action){
+    if(speaker === "PUPPETMASTER67" && action === "start"){
+        warble.loop = true;
+        warble.currentTime = 0;
+        warble.play().catch(()=>{});
+        bossCore.classList.add("talking");
+    }
+    if(action === "stop"){
+        warble.pause();
+        warble.currentTime = 0;
+        bossCore.classList.remove("talking");
+    }
+}
+
+/* ========= PAGE TRANSITION ========= */
+function goToFinalGame(){
+    // If you want a delay, keep setTimeout; otherwise just change location.
+    window.location.href = "FinalBossGame.html";
+}
+
+/* ========= TYPING LOGIC ========= */
+function typeLine(){
+    const line = lines[lineIndex];
+
+    dialogueText.innerHTML = "";
+    hideClickHint();
+    speakerEl.textContent = line.speaker;
+
+    charIndex  = 0;
+    isTyping   = true;
+    canClick   = false;
+    dialogueText.classList.add("typing");
+
+    clearInterval(typingInterval);
+    typingInterval = setInterval(()=>{
+        if(charIndex < line.text.length){
+            dialogueText.innerHTML += line.text.charAt(charIndex);
+            charIndex++;
+
+            if(line.speaker === "PUPPETMASTER67" && charIndex === 1 && audioUnlocked){
+                handleVoice("PUPPETMASTER67", "start");
+            }
+        } else {
+            clearInterval(typingInterval);
+            isTyping = false;
+            dialogueText.classList.remove("typing");
+
+            if(line.speaker === "PUPPETMASTER67"){
+                handleVoice("PUPPETMASTER67", "stop");
+            }
+
+            if(lineIndex === lines.length - 1){
+                setTimeout(goToFinalGame, 900);
+            } else {
+                canClick = true;
+                showClickHint();
+            }
+        }
+    }, 30);
+}
+
+/* ========= BOSS ENTRANCE: 3 THUMPS (SHAKE ONLY) ========= */
+function triggerBossEntrance(){
+    canClick = false;
+    hideClickHint();
+
+    // Show this line while the thumps happen
+    speakerEl.textContent = "You";
+    dialogueText.classList.remove("typing");
+    dialogueText.innerHTML = "What is that sound?";
+
+    let thumpsDone = 0;
+    const maxThumps = 3;
+
+    function doThump(){
+        if(thumpsDone >= maxThumps){
+            bossContainer.classList.add("show");
+            bossAppeared = true;
+            lineIndex = 1; // Puppetmaster starts talking from line 1
+            typeLine();
+            return;
+        }
+
+        thumpsDone++;
+
+        // Shake inner wrapper only
+        shaker.classList.add("shake");
+
+        // Play thump sound
+        if(thud){
+            thud.currentTime = 0;
+            thud.play().catch(()=>{});
+        }
+
+        // Remove shake after animation ends, then small delay before next thump
+        setTimeout(()=>{
+            shaker.classList.remove("shake");
+            setTimeout(doThump, 250);
+        }, 600); // match shake animation duration
+    }
+
+    doThump();
+}
+
+/* ========= CLICK HANDLER ========= */
+dialogueBox.addEventListener("click", () => {
+    const line = lines[lineIndex];
+
+    // If still typing, skip to end of current line
+    if(isTyping){
+        clearInterval(typingInterval);
+        isTyping = false;
+        dialogueText.classList.remove("typing");
+        dialogueText.innerHTML = line.text;
+
+        if(line.speaker === "PUPPETMASTER67"){
+            handleVoice("PUPPETMASTER67", "stop");
+        }
+if(lineIndex === lines.length - 1){
+  setTimeout(goToFinalGame, 900);
+}
+
+        if(lineIndex === 0 && !bossAppeared){
+            showClickHint();
+            canClick = true;
+        } else if(lineIndex !== lines.length - 1){
+            showClickHint();
+            canClick = true;
+        }
+        return;
+    }
+
+    // if clicks are not allowed yet, ignore
+    if(!canClick && !(lineIndex === 0 && !bossAppeared)) return;
+
+    // SPECIAL CASE: after first line, do 3 thumps then show boss
+    if(lineIndex === 0 && !bossAppeared){
+        triggerBossEntrance();
+        return;
+    }
+
+    // normal progression for other lines
+    if(lineIndex < lines.length - 1){
+        canClick = false;
+        hideClickHint();
+        lineIndex++;
+        typeLine();
+    }
+});
+
+/* ========= INITIALIZE ========= */
+window.addEventListener("load", () => {
+    typeLine(); // start with line 0: quiet corridor
+});
+</script>
+
+</body>
+</html>
