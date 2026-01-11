@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Loading Page</title>
+<style>
+body {
+    margin: 0;
+    background: #000;
+    font-family: Arial, Helvetica, sans-serif;
+    color: white;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* ================= FRAME ================= */
+.frame {
+    width: 960px;
+    height: 540px;
+    border: 2px solid white;
+    position: relative;
+    background: black;
+    overflow: hidden;
+    box-sizing: border-box;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* ================= LOADING ================= */
+#loadingScreen {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.loading-text {
+    font-size: 20px;
+    margin-bottom: 20px;
+    letter-spacing: 2px;
+}
+
+.loading-bar-container {
+    width: 60%;
+    height: 14px;
+    border: 2px solid white;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.loading-bar {
+    height: 100%;
+    width: 0%;
+    background: white;
+    transition: width 0.12s linear;
+}
+
+/* ================= MENU ================= */
+#menuScreen {
+    display: none;              /* hidden until loading ends */
+    width: 100%;
+    height: 100%;
+    padding: 40px;
+    box-sizing: border-box;
+    text-align: center;
+
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+
+    opacity: 0;
+}
+
+#menuScreen.show {
+    display: flex;
+    animation: fadeIn 0.7s ease forwards;
+}
+
+h1 {
+    font-size: 48px;
+    margin-bottom: 20px;
+    letter-spacing: 4px;
+}
+
+.instructions {
+    max-width: 600px;
+    font-size: 16px;
+    line-height: 1.6;
+    margin-bottom: 30px;
+    color: #ddd;
+}
+
+.start-btn {
+    padding: 14px 36px;
+    font-size: 18px;
+    background: white;
+    color: black;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.start-btn:hover {
+    background: #ccc;
+    transform: scale(1.05);
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0px); }
+}
+</style>
+</head>
+
+<body>
+
+<!-- ✅ Audio must be inside body -->
+<audio id="bgm" src="bgm.mp3" loop></audio>
+
+<div class="frame">
+
+    <!-- LOADING (shows first) -->
+    <div id="loadingScreen">
+        <div class="loading-text">LOADING…</div>
+        <div class="loading-bar-container">
+            <div class="loading-bar" id="loadingBar"></div>
+        </div>
+    </div>
+
+    <!-- MENU (shows after loading) -->
+    <div id="menuScreen">
+        <h1>ROOM 404</h1>
+
+        <div class="instructions">
+            You are trapped inside <b>Room 404</b>.<br><br>
+            To escape, you must identify online harms worsened by GenAI,
+            survive hostile entities, and make the right choices.<br><br>
+            Stay alert. Not everything is what it seems.
+        </div>
+
+        <button class="start-btn" id="startBtn">START</button>
+    </div>
+
+</div>
+
+<script>
+const bar = document.getElementById("loadingBar");
+const loadingScreen = document.getElementById("loadingScreen");
+const menuScreen = document.getElementById("menuScreen");
+const bgm = document.getElementById("bgm");
+
+let progress = 0;
+
+/* ✅ Faster loading: quicker interval + bigger increments */
+const loadingInterval = setInterval(() => {
+    progress += 18 + Math.random() * 20; // jumps faster
+
+    if (progress >= 100) {
+        progress = 100;
+        bar.style.width = "100%";
+        clearInterval(loadingInterval);
+
+        setTimeout(() => {
+            loadingScreen.style.display = "none";
+            menuScreen.classList.add("show"); // ✅ centered instructions appear after loading
+        }, 200);
+    } else {
+        bar.style.width = progress + "%";
+    }
+}, 120); // ✅ faster refresh rate
+
+// ✅ START BUTTON — UNLOCK + PLAY BGM
+document.getElementById("startBtn").addEventListener("click", () => {
+    localStorage.setItem("bgmPlaying", "true");
+
+    bgm.volume = 0.6;
+    bgm.play().catch(() => {});
+
+    setTimeout(() => {
+        window.location.href = "Starting.html";
+    }, 200);
+});
+</script>
+
+</body>
+</html>
